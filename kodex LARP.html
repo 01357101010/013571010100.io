@@ -1,0 +1,2989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KODEX · OPERATION NIGHTJAR</title>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+        --bg: #0a0f1e;
+        --bg-panel: #0f172a;
+        --bg-card: #131c30;
+        --bg-hover: #1a2540;
+        --sidebar: #0b1220;
+        --border: #1e2a45;
+        --border-light: #2a3a5a;
+        --text: #e5eaf2;
+        --text-dim: #8a9ab8;
+        --text-muted: #5a6a85;
+        --blue: #2563eb;
+        --blue-light: #3b82f6;
+        --blue-pale: #60a5fa;
+        --green: #10b981;
+        --green-pale: #34d399;
+        --yellow: #f59e0b;
+        --red: #ef4444;
+        --red-pale: #f87171;
+        --purple: #8b5cf6;
+        --cyan: #06b6d4;
+        --blurple: #5865f2;
+        --gold: #ffd966;
+        --pink: #f778ba;
+    }
+    body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Fira Code', monospace;
+        font-size: 13px;
+        min-height: 100vh;
+        height: 100vh;
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: 220px 1fr;
+    }
+    #app { display: contents; }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+        background: var(--sidebar);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        z-index: 10;
+    }
+    .sidebar-logo {
+        padding: 20px 18px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: var(--text);
+        letter-spacing: 1px;
+    }
+    .logo-mark {
+        width: 28px;
+        height: 28px;
+        background: linear-gradient(135deg, var(--blue), var(--cyan));
+        clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #fff;
+        font-size: 0.8rem;
+        flex-shrink: 0;
+    }
+    .nav-section {
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+    }
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 18px;
+        font-size: 0.82rem;
+        color: var(--text-dim);
+        cursor: pointer;
+        transition: background 0.1s, color 0.1s;
+        border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: var(--bg-hover); color: var(--text); }
+    .nav-item.active {
+        background: var(--bg-hover);
+        color: var(--text);
+        border-left-color: var(--blue);
+    }
+    .nav-item .icon { width: 16px; text-align: center; font-size: 0.9rem; }
+    .nav-item .badge {
+        margin-left: auto;
+        background: var(--blue);
+        color: #fff;
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        border-radius: 8px;
+    }
+    .nav-item .badge.red { background: var(--red); }
+    .nav-item .badge.gold { background: var(--gold); color: #000; }
+
+    /* ===== MAIN AREA ===== */
+    .main {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0;
+    }
+    .topbar {
+        background: var(--bg-panel);
+        border-bottom: 1px solid var(--border);
+        padding: 14px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+        gap: 16px;
+    }
+    .topbar-title {
+        font-size: 0.9rem;
+        color: var(--text);
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+    .topbar-title span { color: var(--text-muted); }
+    .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    .timer-badge {
+        background: var(--bg-card);
+        border: 1px solid var(--border-light);
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .timer-badge.danger { border-color: var(--red); color: var(--red-pale); }
+    .timer-badge.warn { border-color: var(--yellow); color: var(--yellow); }
+    .timer-val { color: var(--text); font-weight: 500; }
+    .user-chip {
+        width: 32px; height: 32px; border-radius: 50%;
+        background: linear-gradient(135deg, var(--blue), var(--purple));
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.75rem; color: #fff; font-weight: 500;
+        flex-shrink: 0;
+    }
+
+    /* ===== PAGES ===== */
+    .page { display: none; flex: 1; overflow: hidden; min-height: 0; }
+    .page.active { display: flex; flex-direction: column; }
+
+    /* ===== DASHBOARD PAGE ===== */
+    .content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-height: 0;
+    }
+    .welcome-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .welcome-title { font-size: 1.4rem; margin: 0 0 4px; font-weight: 500; }
+    .welcome-sub { color: var(--text-dim); font-size: 0.82rem; }
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        flex-shrink: 0;
+    }
+    .kpi {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 14px 16px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    .kpi-icon {
+        width: 36px; height: 36px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem; flex-shrink: 0;
+    }
+    .kpi-icon.blue { background: rgba(37,99,235,0.15); color: var(--blue-light); }
+    .kpi-icon.green { background: rgba(16,185,129,0.15); color: var(--green); }
+    .kpi-icon.purple { background: rgba(139,92,246,0.15); color: var(--purple); }
+    .kpi-info { display: flex; flex-direction: column; gap: 2px; }
+    .kpi-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+    .kpi-value { font-size: 1.2rem; font-weight: 500; }
+    .kpi-delta { font-size: 0.68rem; color: var(--green); }
+
+    /* ===== INTEL SYNC BAR ===== */
+    .intel-sync {
+        background: linear-gradient(90deg, rgba(37,99,235,0.15), rgba(139,92,246,0.15));
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        padding: 12px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    .intel-sync-left { display: flex; align-items: center; gap: 12px; }
+    .intel-sync-icon {
+        width: 36px; height: 36px; border-radius: 8px;
+        background: rgba(139,92,246,0.2); color: var(--purple);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem; flex-shrink: 0;
+    }
+    .intel-sync-title { font-size: 0.85rem; font-weight: 500; color: var(--text); }
+    .intel-sync-desc { font-size: 0.72rem; color: var(--text-dim); }
+    .intel-sync-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .main-grid {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 16px;
+        flex: 1;
+        min-height: 0;
+    }
+    .requests-panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0;
+    }
+    .panel-head {
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .panel-title { font-size: 0.9rem; font-weight: 500; }
+    .search-box {
+        flex: 1;
+        min-width: 160px;
+        background: var(--bg-panel);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 6px 12px;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 0.75rem;
+        outline: none;
+    }
+    .search-box:focus { border-color: var(--blue); }
+    .request-list { flex: 1; overflow-y: auto; min-height: 0; }
+    .request-row {
+        display: grid;
+        grid-template-columns: 130px 100px 120px 1fr 100px 110px;
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: background 0.1s;
+        gap: 10px;
+        align-items: center;
+    }
+    .request-row:hover { background: var(--bg-hover); }
+    .request-row.selected { background: var(--bg-hover); border-left: 3px solid var(--blue); padding-left: 15px; }
+    .req-id { color: var(--text-dim); font-size: 0.72rem; }
+    .req-platform { display: flex; align-items: center; gap: 6px; color: var(--text); }
+    .platform-dot {
+        width: 16px; height: 16px; border-radius: 50%;
+        background: var(--blue);
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 0.55rem; color: #fff; font-weight: 700;
+        flex-shrink: 0;
+    }
+    .platform-dot.signal { background: #3a76f0; }
+    .platform-dot.telegram { background: #2aabee; }
+    .platform-dot.discord { background: #5865f2; }
+    .req-type { color: var(--text-dim); }
+    .req-subject { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .req-status {
+        font-size: 0.68rem;
+        padding: 3px 9px;
+        border-radius: 12px;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .status-progress { background: rgba(37,99,235,0.2); color: var(--blue-pale); }
+    .status-completed { background: rgba(16,185,129,0.2); color: var(--green-pale); }
+    .status-escalated { background: rgba(239,68,68,0.2); color: var(--red-pale); }
+    .status-closed { background: rgba(90,106,133,0.2); color: var(--text-muted); }
+    .status-pending { background: rgba(245,158,11,0.2); color: var(--yellow); }
+    .status-denied { background: rgba(239,68,68,0.25); color: var(--red-pale); }
+    .req-time { color: var(--text-muted); font-size: 0.7rem; text-align: right; }
+
+    /* ===== DETAIL PANEL ===== */
+    .detail-panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0;
+    }
+    .detail-head { padding: 14px 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .detail-back {
+        font-size: 0.7rem; color: var(--blue-pale); cursor: pointer;
+        margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+    }
+    .detail-back:hover { text-decoration: underline; }
+    .detail-id { font-size: 1rem; font-weight: 500; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .detail-tags { display: flex; gap: 8px; font-size: 0.7rem; color: var(--text-dim); flex-wrap: wrap; }
+    .detail-tag {
+        display: flex; align-items: center; gap: 5px;
+        padding: 3px 8px; background: var(--bg-panel); border-radius: 4px;
+    }
+    .detail-body {
+        flex: 1; overflow-y: auto; padding: 18px; min-height: 0;
+        display: flex; flex-direction: column; gap: 16px;
+    }
+    .detail-section-label {
+        font-size: 0.68rem; color: var(--text-dim);
+        text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px;
+    }
+    .detail-field {
+        display: grid; grid-template-columns: 130px 1fr; gap: 10px;
+        font-size: 0.78rem; padding: 6px 0; border-bottom: 1px solid var(--border);
+    }
+    .detail-field .k { color: var(--text-dim); }
+    .detail-field .v { color: var(--text); word-break: break-word; }
+    .timeline { display: flex; flex-direction: column; gap: 0; padding-left: 8px; }
+    .tl-item { display: flex; gap: 12px; padding-bottom: 14px; position: relative; }
+    .tl-item:not(:last-child)::before {
+        content: ''; position: absolute; left: 11px; top: 24px;
+        bottom: 0; width: 1px; background: var(--border);
+    }
+    .tl-marker {
+        width: 24px; height: 24px; border-radius: 50%;
+        background: var(--bg-panel); border: 2px solid var(--border);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.6rem; flex-shrink: 0; z-index: 1;
+    }
+    .tl-marker.blue { border-color: var(--blue); color: var(--blue-pale); }
+    .tl-marker.green { border-color: var(--green); color: var(--green-pale); }
+    .tl-marker.yellow { border-color: var(--yellow); color: var(--yellow); }
+    .tl-marker.red { border-color: var(--red); color: var(--red-pale); }
+    .tl-marker.purple { border-color: var(--purple); color: var(--purple); }
+    .tl-content { flex: 1; font-size: 0.75rem; line-height: 1.5; }
+    .tl-time { color: var(--text-muted); font-size: 0.68rem; }
+    .tl-title { color: var(--text); margin: 2px 0 4px; font-weight: 500; }
+    .tl-desc { color: var(--text-dim); }
+    .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+        padding: 8px 14px; border-radius: 5px; font-family: inherit;
+        font-size: 0.75rem; cursor: pointer;
+        border: 1px solid var(--border-light);
+        background: var(--bg-panel); color: var(--text);
+        transition: background 0.1s, border-color 0.1s;
+    }
+    .btn:hover { background: var(--bg-hover); border-color: var(--blue-light); }
+    .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .btn.primary:hover { background: var(--blue-light); border-color: var(--blue-light); }
+    .btn.danger { background: transparent; border-color: var(--red); color: var(--red-pale); }
+    .btn.danger:hover { background: var(--red); color: #fff; }
+    .btn.ghost { background: transparent; border-color: var(--border); color: var(--text-muted); }
+    .btn.ghost:hover { color: var(--text); border-color: var(--text-muted); }
+    .btn.purple { background: var(--purple); border-color: var(--purple); color: #fff; }
+    .btn.purple:hover { background: #7c4dff; border-color: #7c4dff; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ===== NIGHTJAR PAGE ===== */
+    #page-nightjar { padding: 12px 16px; gap: 10px; }
+    .nightjar-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 8px 15px; background: var(--bg-card);
+        border: 1px solid var(--border); border-radius: 4px;
+        flex-shrink: 0; gap: 15px; flex-wrap: wrap;
+    }
+    .nightjar-header h1 {
+        font-size: 0.9rem; margin: 0; color: var(--green);
+        letter-spacing: 2px; white-space: nowrap;
+    }
+    .header-stats { display: flex; gap: 18px; font-size: 0.72rem; flex-wrap: wrap; }
+    .stat-label { color: var(--text-muted); }
+    .stat-value { color: var(--cyan); font-weight: 500; }
+    .stat-value.danger { color: var(--red); }
+    .stat-value.warn { color: var(--yellow); }
+    .stat-value.good { color: var(--green); }
+
+    /* ===== SERVER HUB ===== */
+    .server-hub {
+        flex: 1; overflow-y: auto; padding: 20px;
+        display: flex; flex-direction: column; gap: 20px;
+    }
+    .server-hub-header {
+        display: flex; justify-content: space-between;
+        align-items: flex-start; gap: 20px; flex-wrap: wrap;
+    }
+    .server-hub-title {
+        font-size: 1.2rem; font-weight: 500;
+        color: var(--green); letter-spacing: 2px;
+    }
+    .server-hub-sub { font-size: 0.78rem; color: var(--text-dim); margin-top: 4px; }
+    .server-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 14px;
+    }
+    .server-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        cursor: pointer;
+        transition: all 0.15s;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        position: relative;
+        overflow: hidden;
+    }
+    .server-card:hover {
+        border-color: var(--blurple);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(88,101,242,0.15);
+    }
+    .server-card.cleared {
+        border-color: var(--green);
+        background: linear-gradient(135deg, var(--bg-card), rgba(16,185,129,0.05));
+    }
+    .server-card.cleared::before {
+        content: '✓ CLEARED';
+        position: absolute;
+        top: 12px; right: 12px;
+        background: var(--green);
+        color: #fff;
+        font-size: 0.6rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+    }
+    .server-card.locked {
+        opacity: 0.5;
+        cursor: not-allowed;
+        filter: grayscale(0.7);
+    }
+    .server-card.locked:hover {
+        transform: none;
+        border-color: var(--border);
+        box-shadow: none;
+    }
+    .server-card.locked::after {
+        content: '🔒 LOCKED';
+        position: absolute;
+        top: 12px; right: 12px;
+        background: var(--red);
+        color: #fff;
+        font-size: 0.6rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+    }
+    .server-card.danger-zone {
+        border-color: rgba(239,68,68,0.4);
+    }
+    .server-card.danger-zone:hover {
+        border-color: var(--red);
+        box-shadow: 0 8px 24px rgba(239,68,68,0.2);
+    }
+    .server-card-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .server-icon {
+        width: 44px; height: 44px;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+        font-weight: 700;
+        color: #fff;
+    }
+    .server-info { flex: 1; min-width: 0; }
+    .server-name {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .server-desc {
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        margin-top: 3px;
+        line-height: 1.4;
+    }
+    .server-meta {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px 12px;
+        font-size: 0.7rem;
+        padding-top: 10px;
+        border-top: 1px solid var(--border);
+    }
+    .server-meta-item { display: flex; justify-content: space-between; }
+    .server-meta-item .k { color: var(--text-muted); }
+    .server-meta-item .v { color: var(--text); }
+    .server-meta-item .v.danger { color: var(--red-pale); }
+    .server-meta-item .v.warn { color: var(--yellow); }
+    .server-meta-item .v.good { color: var(--green-pale); }
+    .server-tags {
+        display: flex; gap: 6px; flex-wrap: wrap;
+        margin-top: 4px;
+    }
+    .server-tag {
+        font-size: 0.6rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        background: var(--bg-panel);
+        color: var(--text-dim);
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+    .server-tag.hard { background: rgba(239,68,68,0.15); color: var(--red-pale); }
+    .server-tag.medium { background: rgba(245,158,11,0.15); color: var(--yellow); }
+    .server-tag.easy { background: rgba(16,185,129,0.15); color: var(--green-pale); }
+    .server-tag.special { background: rgba(139,92,246,0.15); color: var(--purple); }
+
+    /* ===== ACTIVE SERVER VIEW ===== */
+    .nightjar-grid {
+        display: grid;
+        grid-template-columns: 220px 1fr 340px;
+        gap: 10px; flex: 1; min-height: 0;
+    }
+    .nj-panel {
+        background: var(--bg-card); border: 1px solid var(--border);
+        border-radius: 4px; display: flex; flex-direction: column;
+        min-height: 0; overflow: hidden;
+    }
+    .nj-panel-header {
+        padding: 10px 12px; font-size: 0.68rem; color: var(--text-muted);
+        text-transform: uppercase; letter-spacing: 1.5px;
+        border-bottom: 1px solid var(--border); flex-shrink: 0;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .nj-panel-body { flex: 1; overflow-y: auto; padding: 8px; }
+    .channel-item {
+        padding: 7px 10px; font-size: 0.78rem; color: var(--text-muted);
+        cursor: pointer; border-radius: 3px;
+        transition: background 0.1s, color 0.1s;
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 2px; gap: 6px;
+    }
+    .channel-item:hover { background: rgba(88,101,242,0.08); color: var(--text); }
+    .channel-item.active { background: rgba(88,101,242,0.15); color: var(--text); font-weight: 500; }
+    .channel-item .unread {
+        background: var(--red); color: #fff; font-size: 0.6rem;
+        padding: 1px 5px; border-radius: 8px; min-width: 16px; text-align: center;
+    }
+    .channel-item .voice-dot {
+        display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+        background: var(--green); margin-right: 6px;
+        box-shadow: 0 0 6px rgba(63,185,80,0.8);
+        animation: voicePulse 2s ease-in-out infinite;
+    }
+    @keyframes voicePulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    .suspect-card {
+        padding: 8px; border-radius: 3px; cursor: pointer;
+        transition: background 0.1s; margin-bottom: 4px;
+        border-left: 3px solid transparent; position: relative;
+    }
+    .suspect-card:hover { background: rgba(88,101,242,0.1); }
+    .suspect-card.selected { background: rgba(88,101,242,0.15); border-left-color: var(--blurple); }
+    .suspect-card.flagged { border-left-color: var(--red); }
+    .suspect-card.unmasked { border-left-color: var(--green); background: rgba(16,185,129,0.08); }
+    .suspect-head { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+    .avatar {
+        width: 22px; height: 22px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.7rem; font-weight: 500; color: #000; flex-shrink: 0;
+        position: relative;
+    }
+    .avatar.voice::after {
+        content: ''; position: absolute; inset: -2px;
+        border: 2px solid var(--green); border-radius: 50%;
+        animation: voicePulse 1.5s ease-in-out infinite;
+    }
+    .suspect-name { font-size: 0.8rem; font-weight: 500; }
+    .suspect-meta { font-size: 0.65rem; color: var(--text-muted); padding-left: 30px; }
+    .section-label {
+        padding: 8px 8px 4px; font-size: 0.62rem; color: var(--text-muted);
+        text-transform: uppercase; letter-spacing: 1.5px;
+        border-bottom: 1px solid var(--border); margin-bottom: 6px;
+    }
+    #nj-chat-panel { min-width: 0; }
+    #nj-chat-feed { flex: 1; overflow-y: auto; padding: 12px; scroll-behavior: smooth; }
+    .message {
+        display: flex; gap: 10px; padding: 6px 4px;
+        border-radius: 3px; transition: background 0.15s;
+        animation: msgIn 0.3s ease-out;
+    }
+    @keyframes msgIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+    .message:hover { background: rgba(255,255,255,0.02); }
+    .message.clickable { cursor: pointer; }
+    .message.marked { background: rgba(63,185,80,0.08); border-left: 2px solid var(--green); padding-left: 8px; }
+    .msg-body { flex: 1; min-width: 0; }
+    .msg-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 3px; }
+    .msg-author { font-size: 0.82rem; font-weight: 500; }
+    .msg-time { font-size: 0.65rem; color: var(--text-muted); }
+    .msg-text { font-size: 0.82rem; line-height: 1.5; word-wrap: break-word; }
+    .reactions { display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
+    .reaction {
+        background: rgba(88,101,242,0.15); border: 1px solid rgba(88,101,242,0.3);
+        padding: 1px 6px; border-radius: 10px; font-size: 0.7rem;
+        color: var(--text); display: inline-flex; align-items: center; gap: 4px;
+    }
+    .reaction .count { color: var(--text-muted); font-size: 0.65rem; }
+    .clue {
+        display: inline-block; padding: 0 4px;
+        background: rgba(88,101,242,0.2); border-bottom: 1px dotted var(--blurple);
+        cursor: pointer; border-radius: 2px; transition: all 0.15s;
+    }
+    .clue:hover { background: rgba(88,101,242,0.4); }
+    .clue.collected { background: rgba(63,185,80,0.2); border-bottom-color: var(--green); color: var(--green); }
+    .typing-indicator {
+        padding: 8px 16px; font-size: 0.75rem; color: var(--text-muted);
+        font-style: italic; display: none;
+    }
+    .typing-indicator.active { display: block; }
+    .typing-dots::after { content: ''; animation: dots 1.2s steps(4,end) infinite; }
+    @keyframes dots { 0%,20%{content:''} 40%{content:'.'} 60%{content:'..'} 80%,100%{content:'...'} }
+    .command-bar {
+        display: flex; gap: 8px; padding: 10px 12px;
+        border-top: 1px solid var(--border); flex-shrink: 0;
+    }
+    .command-bar input {
+        flex: 1; background: var(--bg-panel); border: 1px solid var(--border);
+        color: var(--text); font-family: inherit; font-size: 0.8rem;
+        padding: 8px 10px; border-radius: 3px; outline: none;
+    }
+    .command-bar input:focus { border-color: var(--blurple); }
+    .evidence-item {
+        padding: 8px; background: rgba(88,101,242,0.08);
+        border-left: 3px solid var(--blurple); border-radius: 3px;
+        margin-bottom: 6px; font-size: 0.75rem; line-height: 1.4;
+    }
+    .evidence-item.wallet { border-left-color: var(--yellow); background: rgba(210,153,34,0.08); }
+    .evidence-item.ip { border-left-color: var(--cyan); background: rgba(121,192,255,0.08); }
+    .evidence-item.name { border-left-color: var(--pink); background: rgba(247,120,186,0.08); }
+    .evidence-item.hint { border-left-color: var(--purple); background: rgba(188,140,255,0.08); }
+    .evidence-item.dm { border-left-color: var(--green); background: rgba(63,185,80,0.08); }
+    .evidence-item.intel { border-left-color: var(--gold); background: rgba(255,217,102,0.08); }
+    .evidence-item.cross { border-left-color: var(--red); background: rgba(239,68,68,0.08); }
+    .evidence-tag {
+        font-size: 0.6rem; color: var(--text-muted);
+        text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px;
+    }
+    .evidence-content { color: var(--text); word-break: break-word; }
+    .empty-state {
+        color: var(--text-muted); font-size: 0.75rem;
+        text-align: center; padding: 20px 10px; font-style: italic;
+    }
+
+    /* ===== CONTEXT MENU ===== */
+    .ctx-menu {
+        display: none; position: fixed; background: #1a1d24;
+        border: 1px solid var(--border); border-radius: 4px;
+        padding: 4px 0; min-width: 200px; z-index: 500;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    }
+    .ctx-menu.open { display: block; }
+    .ctx-item {
+        padding: 8px 14px; font-size: 0.78rem; cursor: pointer;
+        color: var(--text); transition: background 0.1s;
+    }
+    .ctx-item:hover { background: rgba(88,101,242,0.15); }
+    .ctx-item.disabled { color: var(--text-muted); cursor: not-allowed; }
+    .ctx-item.disabled:hover { background: transparent; }
+    .ctx-sep { height: 1px; background: var(--border); margin: 4px 0; }
+
+    /* ===== MODALS ===== */
+    .modal-bg {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,0.75); z-index: 100;
+        justify-content: center; align-items: center; padding: 20px;
+    }
+    .modal-bg.open { display: flex; }
+    .modal {
+        background: var(--bg-card); border: 1px solid var(--border-light);
+        border-radius: 10px; padding: 24px; max-width: 560px;
+        width: 100%; max-height: 90vh; overflow-y: auto;
+    }
+    .modal h2 { margin: 0 0 6px; font-size: 1.1rem; font-weight: 500; }
+    .modal .sub { color: var(--text-dim); font-size: 0.78rem; margin-bottom: 20px; }
+    .form-row { margin-bottom: 14px; }
+    .form-label {
+        display: block; font-size: 0.72rem; color: var(--text-dim);
+        text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+    }
+    .form-input, .form-select, .form-textarea {
+        width: 100%; padding: 9px 12px; background: var(--bg-panel);
+        border: 1px solid var(--border); border-radius: 5px;
+        color: var(--text); font-family: inherit; font-size: 0.8rem; outline: none;
+    }
+    .form-textarea { min-height: 80px; resize: vertical; }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--blue); }
+    .type-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .type-card {
+        padding: 10px 12px; background: var(--bg-panel);
+        border: 1px solid var(--border); border-radius: 5px;
+        cursor: pointer; transition: all 0.1s; font-size: 0.75rem;
+    }
+    .type-card:hover { border-color: var(--blue-light); }
+    .type-card.selected { border-color: var(--blue); background: rgba(37,99,235,0.1); }
+    .type-card-name { color: var(--text); margin-bottom: 3px; font-weight: 500; }
+    .type-card-desc { color: var(--text-muted); font-size: 0.68rem; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+    /* ===== TOASTS ===== */
+    .toast-stack {
+        position: fixed; bottom: 20px; right: 20px;
+        display: flex; flex-direction: column; gap: 8px; z-index: 2000;
+    }
+    .toast {
+        background: var(--bg-card); border: 1px solid var(--border-light);
+        border-left: 3px solid var(--blue); padding: 12px 18px;
+        border-radius: 6px; font-size: 0.78rem;
+        min-width: 260px; max-width: 380px;
+        animation: toastIn 0.3s ease;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .toast.success { border-left-color: var(--green); }
+    .toast.warn { border-left-color: var(--yellow); }
+    .toast.error { border-left-color: var(--red); }
+    .toast.intel { border-left-color: var(--purple); }
+    .toast-title { color: var(--text); margin-bottom: 3px; font-weight: 500; }
+    .toast-desc { color: var(--text-dim); font-size: 0.72rem; line-height: 1.4; }
+    @keyframes toastIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+
+    /* ===== OVERLAYS ===== */
+    .overlay {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,0.9); z-index: 1000;
+        justify-content: center; align-items: center;
+        padding: 20px; overflow-y: auto;
+    }
+    .overlay.open { display: flex; }
+    .overlay-card {
+        background: var(--bg-card); border: 1px solid var(--border-light);
+        border-radius: 10px; padding: 32px; max-width: 620px;
+        width: 100%; text-align: center; margin: auto;
+    }
+    .overlay-card h2 {
+        margin: 0 0 12px; font-size: 1.4rem;
+        letter-spacing: 1px; font-weight: 500;
+    }
+    .overlay-card.win h2 { color: var(--green-pale); }
+    .overlay-card.lose h2 { color: var(--red-pale); }
+    .overlay-card p { font-size: 0.85rem; line-height: 1.6; color: var(--text-dim); margin-bottom: 24px; }
+    .overlay-stats {
+        display: grid; grid-template-columns: auto auto; gap: 10px 24px;
+        margin: 20px auto; text-align: left; font-size: 0.82rem; max-width: 400px;
+    }
+    .overlay-stats .k { color: var(--text-dim); }
+    .overlay-stats .v { color: var(--text); font-weight: 500; }
+
+    .leaderboard-table {
+        width: 100%; font-size: 0.75rem; margin: 15px 0;
+        border-collapse: collapse; text-align: left;
+    }
+    .leaderboard-table th {
+        color: var(--text-muted); text-transform: uppercase; font-size: 0.65rem;
+        letter-spacing: 1px; padding: 6px 8px;
+        border-bottom: 1px solid var(--border); font-weight: normal;
+    }
+    .leaderboard-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); }
+    .leaderboard-table tr:first-child td { color: var(--gold); }
+
+    /* ===== DM MODAL ===== */
+    .dm-modal-bg {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,0.75); z-index: 300;
+        justify-content: center; align-items: center; padding: 20px;
+    }
+    .dm-modal-bg.open { display: flex; }
+    .dm-modal {
+        background: var(--bg-card); border: 1px solid var(--blurple);
+        border-radius: 6px; width: 100%; max-width: 560px;
+        display: flex; flex-direction: column; max-height: 80vh;
+    }
+    .dm-head {
+        padding: 14px 18px; border-bottom: 1px solid var(--border);
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .dm-head .name { color: var(--blurple); font-weight: 500; }
+    .dm-body { flex: 1; overflow-y: auto; padding: 14px; }
+    .dm-msg {
+        padding: 8px 12px; background: var(--bg-panel); border-radius: 4px;
+        margin-bottom: 8px; font-size: 0.8rem; line-height: 1.5;
+    }
+    .dm-msg.from-them { border-left: 3px solid var(--blurple); }
+    .dm-msg.from-you { border-left: 3px solid var(--green); background: rgba(63,185,80,0.08); }
+
+    /* ===== INTEL FEED ===== */
+    .intel-feed {
+        max-height: 300px; overflow-y: auto;
+        background: var(--bg-panel); border: 1px solid var(--border);
+        border-radius: 6px; padding: 10px;
+    }
+    .intel-feed-item {
+        padding: 6px 8px; border-bottom: 1px solid var(--border);
+        font-size: 0.72rem; line-height: 1.4;
+    }
+    .intel-feed-item:last-child { border-bottom: none; }
+    .intel-feed-item .time { color: var(--text-muted); font-size: 0.65rem; }
+    .intel-feed-item .src { color: var(--purple); font-weight: 500; }
+
+    /* ===== SERVER VIEW TOGGLE ===== */
+    .nj-view { display: none; flex: 1; min-height: 0; }
+    .nj-view.active { display: flex; flex-direction: column; }
+
+    /* ===== BACK TO HUB BUTTON ===== */
+    .back-to-hub {
+        font-size: 0.72rem;
+        color: var(--blue-pale);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+        background: var(--bg-panel);
+        transition: all 0.1s;
+        white-space: nowrap;
+    }
+    .back-to-hub:hover {
+        border-color: var(--blue-light);
+        color: var(--text);
+        background: var(--bg-hover);
+    }
+
+    /* ===== MEDIA ===== */
+    @media (max-width: 1100px) {
+        .nightjar-grid { grid-template-columns: 180px 1fr 280px; }
+    }
+    @media (max-width: 900px) {
+        body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: auto; }
+        .sidebar { flex-direction: row; flex-wrap: wrap; border-right: none; border-bottom: 1px solid var(--border); }
+        .sidebar-logo { border-bottom: none; }
+        .nav-section { border-bottom: none; display: flex; flex-wrap: wrap; }
+        .main-grid { grid-template-columns: 1fr; }
+        .kpi-row { grid-template-columns: 1fr; }
+        .request-row { grid-template-columns: 1fr 1fr; font-size: 0.7rem; }
+        .nightjar-grid { grid-template-columns: 1fr; grid-template-rows: auto auto 1fr; height: auto; }
+        .nj-panel { min-height: 200px; }
+        .server-grid { grid-template-columns: 1fr; }
+    }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #1e2a45; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2a3a5a; }
+</style>
+</head>
+<body>
+
+<div id="app">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-mark">K</div>
+        <span>KODEX</span>
+    </div>
+    <div class="nav-section">
+        <div class="nav-item active" data-page="dashboard"><span class="icon">◈</span>Dashboard</div>
+        <div class="nav-item" data-page="new"><span class="icon">＋</span>New Request</div>
+        <div class="nav-item" data-page="requests"><span class="icon">▤</span>My Requests</div>
+        <div class="nav-item" data-page="nightjar"><span class="icon">◉</span>NIGHTJAR</div>
+        <div class="nav-item" data-page="messages"><span class="icon">✉</span>Messages <span class="badge" id="msg-badge">0</span></div>
+    </div>
+    <div class="nav-section">
+        <div class="nav-item" data-page="documents"><span class="icon">▦</span>Documents</div>
+        <div class="nav-item" data-page="contacts"><span class="icon">☍</span>Contacts</div>
+    </div>
+    <div class="nav-section">
+        <div class="nav-item" data-page="agency"><span class="icon">⌂</span>Agency Profile</div>
+        <div class="nav-item" data-page="help"><span class="icon">?</span>Help &amp; Support</div>
+    </div>
+    <div style="flex:1;"></div>
+    <div style="padding:16px 18px; border-top:1px solid var(--border); font-size:0.65rem; color:var(--text-muted);">
+        <div style="color:var(--text-dim); margin-bottom:4px;">KODEX</div>
+        <div>Secure. Compliant. Trusted.</div>
+        <div style="margin-top:8px;">© 2025 Kodex Global.</div>
+    </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+    <div class="topbar">
+        <div class="topbar-title">Discord Government Request Portal <span>·</span> KODEX v4.2.1</div>
+        <div class="topbar-actions">
+            <div class="timer-badge" id="case-timer">
+                <span>◷</span>
+                <span>CASE TIMER</span>
+                <span class="timer-val" id="timer-val">--:--</span>
+            </div>
+            <div class="user-chip">JD</div>
+        </div>
+    </div>
+
+    <!-- ===== DASHBOARD PAGE ===== -->
+    <div class="page active" id="page-dashboard">
+        <div class="content">
+            <div class="welcome-row">
+                <div>
+                    <h1 class="welcome-title">Welcome back, John</h1>
+                    <div class="welcome-sub">Case NIGHTJAR-2025-0417 · Operation Nightjar active</div>
+                </div>
+            </div>
+
+            <div class="intel-sync" id="intel-sync-bar">
+                <div class="intel-sync-left">
+                    <div class="intel-sync-icon">⇄</div>
+                    <div>
+                        <div class="intel-sync-title">Intel Sync: KODEX ↔ NIGHTJAR</div>
+                        <div class="intel-sync-desc" id="intel-sync-desc">File Discord legal process to unlock suspect unmasking in the Nightjar investigation. Open the Nightjar intel panel to see live intel.</div>
+                    </div>
+                </div>
+                <div class="intel-sync-actions">
+                    <button class="btn purple" id="sync-nightjar-btn">◉ Open Nightjar Hub</button>
+                    <button class="btn" id="sync-intel-feed-btn">▤ View Intel Feed</button>
+                </div>
+            </div>
+
+            <div class="kpi-row">
+                <div class="kpi">
+                    <div class="kpi-icon blue">▤</div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Total Requests</div>
+                        <div class="kpi-value" id="kpi-total">0</div>
+                        <div class="kpi-delta" id="kpi-total-delta">↑ 0 this case</div>
+                    </div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-icon purple">◷</div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">In Progress</div>
+                        <div class="kpi-value" id="kpi-progress">0</div>
+                        <div class="kpi-delta">awaiting response</div>
+                    </div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-icon green">✓</div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Unmasked</div>
+                        <div class="kpi-value" id="kpi-unmasked">0</div>
+                        <div class="kpi-delta" id="kpi-unmasked-delta">suspects identified</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-grid">
+                <div class="requests-panel">
+                    <div class="panel-head">
+                        <div class="panel-title">Requests</div>
+                        <input type="text" class="search-box" id="search-box" placeholder="Search by request ID, subject, or platform...">
+                    </div>
+                    <div class="request-list" id="request-list">
+                        <div style="padding:40px 20px; text-align:center; color:var(--text-muted); font-size:0.78rem;">
+                            No requests yet. Click <b style="color:var(--blue-pale);">New Request</b> to begin.
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-panel" id="detail-panel">
+                    <div class="detail-head">
+                        <div class="detail-back" id="detail-back" style="display:none;">← Back to Requests</div>
+                        <div class="detail-id" id="detail-id">No request selected</div>
+                        <div class="detail-tags" id="detail-tags"></div>
+                    </div>
+                    <div class="detail-body" id="detail-body">
+                        <div style="padding:40px 20px; text-align:center; color:var(--text-muted); font-size:0.78rem;">
+                            Select a request to view details.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== NIGHTJAR PAGE ===== -->
+    <div class="page" id="page-nightjar">
+        <!-- SERVER HUB VIEW -->
+        <div class="nj-view active" id="nj-view-hub">
+            <div class="server-hub">
+                <div class="server-hub-header">
+                    <div>
+                        <div class="server-hub-title">◉ OPERATION NIGHTJAR — SERVER HUB</div>
+                        <div class="server-hub-sub">Select a Discord server to investigate. Clear servers by identifying the ringleader.</div>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <div class="timer-badge" style="border-color:var(--green); color:var(--green-pale);">
+                            <span>◉</span>
+                            <span>CLEARED</span>
+                            <span class="timer-val" id="hub-cleared-count">0 / 7</span>
+                        </div>
+                        <div class="timer-badge" style="border-color:var(--purple); color:var(--purple);">
+                            <span>🔓</span>
+                            <span>UNMASKED</span>
+                            <span class="timer-val" id="hub-unmasked-count">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="server-grid" id="server-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ACTIVE SERVER VIEW -->
+        <div class="nj-view" id="nj-view-server">
+            <div class="nightjar-header">
+                <h1 id="nj-server-title">◉ OPERATION NIGHTJAR</h1>
+                <div class="header-stats">
+                    <div><span class="stat-label">SERVER:</span> <span class="stat-value" id="nj-server-name">—</span></div>
+                    <div><span class="stat-label">SUSPECTS:</span> <span class="stat-value" id="nj-member-count">0</span></div>
+                    <div><span class="stat-label">EVIDENCE:</span> <span class="stat-value" id="nj-evidence-count">0</span></div>
+                    <div><span class="stat-label">UNMASKED:</span> <span class="stat-value good" id="nj-unmasked-count">0</span></div>
+                    <div><span class="stat-label">TIME:</span> <span class="stat-value" id="nj-timer">—</span></div>
+                </div>
+                <div class="back-to-hub" id="back-to-hub-btn">← Server Hub</div>
+            </div>
+            <div class="nightjar-grid">
+                <div class="nj-panel" id="nj-left-panel">
+                    <div class="section-label">◉ CHANNELS</div>
+                    <div id="nj-channels-list" style="padding: 4px 6px;"></div>
+                    <div class="section-label" style="border-top: 1px solid var(--border);">◉ SUSPECTS</div>
+                    <div class="nj-panel-body" id="nj-suspects-list" style="padding-top: 6px;">
+                        <div class="empty-state">No suspects identified</div>
+                    </div>
+                </div>
+                <div class="nj-panel" id="nj-chat-panel">
+                    <div class="nj-panel-header">
+                        <span id="nj-chat-channel-label"># general</span>
+                        <span id="nj-chat-status">IDLE</span>
+                    </div>
+                    <div id="nj-chat-feed"></div>
+                    <div class="typing-indicator" id="nj-typing-indicator">
+                        <span id="nj-typing-name">—</span> is typing<span class="typing-dots"></span>
+                    </div>
+                    <div class="command-bar">
+                        <input type="text" id="nj-cmd-input" placeholder="switch #drops · arrest <handle> · help" autocomplete="off" spellcheck="false">
+                        <button class="btn" id="nj-cmd-submit">RUN</button>
+                    </div>
+                </div>
+                <div class="nj-panel" id="nj-evidence-panel">
+                    <div class="nj-panel-header">
+                        <span>◉ EVIDENCE LOG</span>
+                        <button class="btn ghost" style="padding:2px 8px; font-size:0.6rem;" id="nj-clear-evidence">CLR</button>
+                    </div>
+                    <div class="nj-panel-body" id="nj-evidence-list">
+                        <div class="empty-state">Click clues to log them</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</div>
+
+<!-- NEW REQUEST MODAL -->
+<div class="modal-bg" id="new-modal">
+    <div class="modal">
+        <h2>New Request</h2>
+        <div class="sub">Submit a data request to a platform provider.</div>
+        <div class="form-row">
+            <label class="form-label">Platform</label>
+            <select class="form-select" id="form-platform">
+                <option value="discord">Discord</option>
+                <option value="signal">Signal</option>
+                <option value="telegram">Telegram</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <label class="form-label">Request Type</label>
+            <div class="type-cards" id="type-cards">
+                <div class="type-card selected" data-type="legal">
+                    <div class="type-card-name">Legal Process</div>
+                    <div class="type-card-desc">Subpoena or court order. Requires a valid case number.</div>
+                </div>
+                <div class="type-card" data-type="preservation">
+                    <div class="type-card-name">Preservation</div>
+                    <div class="type-card-desc">Preserve data before formal process is served.</div>
+                </div>
+                <div class="type-card" data-type="emergency">
+                    <div class="type-card-name">Emergency Disclosure</div>
+                    <div class="type-card-desc">Life-threatening emergency. Immediate response.</div>
+                </div>
+                <div class="type-card" data-type="takedown">
+                    <div class="type-card-name">Content Takedown</div>
+                    <div class="type-card-desc">Request removal of illegal content or servers.</div>
+                </div>
+            </div>
+        </div>
+        <div class="form-row">
+            <label class="form-label">Subject (Discord handle)</label>
+            <input type="text" class="form-input" id="form-subject" placeholder="e.g. voidwalker, nyx_0x00, ghostbyte..." list="suspect-handles">
+            <datalist id="suspect-handles">
+                <option value="voidwalker">
+                <option value="nyx_0x00">
+                <option value="ghostbyte">
+                <option value="sable_fang">
+                <option value="null_knight">
+                <option value="kR4k3n_b0ss">
+                <option value="cerberus_9">
+                <option value="red_phoenix">
+                <option value="gambit_77">
+                <option value="obsidian_actual">
+                <option value="helix_wraith">
+                <option value="viper_actual">
+                <option value="zero_day_king">
+            </datalist>
+        </div>
+        <div class="form-row">
+            <label class="form-label">Case Number</label>
+            <input type="text" class="form-input" id="form-case" placeholder="e.g. NIGHTJAR-2025-0417" value="NIGHTJAR-2025-0417">
+        </div>
+        <div class="form-row">
+            <label class="form-label">Notes / Justification</label>
+            <textarea class="form-textarea" id="form-notes" placeholder="Briefly describe the investigative need..."></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn" id="modal-cancel">Cancel</button>
+            <button class="btn primary" id="modal-submit">Submit Request</button>
+        </div>
+    </div>
+</div>
+
+<!-- END OVERLAY (KODEX) -->
+<div class="overlay" id="end-overlay">
+    <div class="overlay-card" id="end-card">
+        <h2 id="end-title">CASE CLOSED</h2>
+        <p id="end-subtitle"></p>
+        <div class="overlay-stats" id="end-stats"></div>
+        <button class="btn primary" id="restart-btn" style="padding:12px 30px;">NEW CASE</button>
+    </div>
+</div>
+
+<!-- NIGHTJAR END OVERLAY -->
+<div class="overlay" id="nj-end-overlay">
+    <div class="overlay-card" id="nj-end-card">
+        <h2 id="nj-end-title">CASE CLOSED</h2>
+        <p id="nj-end-subtitle"></p>
+        <div class="overlay-stats" id="nj-end-stats"></div>
+        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+            <button class="btn" id="nj-export-btn">⤓ EXPORT CASE FILE</button>
+            <button class="btn primary" id="nj-return-hub-btn" style="padding:12px 30px;">RETURN TO HUB</button>
+        </div>
+    </div>
+</div>
+
+<!-- INTEL FEED MODAL -->
+<div class="modal-bg" id="intel-feed-modal">
+    <div class="modal" style="max-width: 640px;">
+        <h2>Intel Feed</h2>
+        <div class="sub">Cross-reference between KODEX requests and Nightjar evidence</div>
+        <div class="intel-feed" id="intel-feed-body">
+            <div class="empty-state">No intel yet. File requests and collect evidence.</div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn" id="intel-feed-close">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- CONTEXT MENU (NIGHTJAR) -->
+<div class="ctx-menu" id="nj-ctx-menu">
+    <div class="ctx-item" data-action="inspect">Inspect dossier</div>
+    <div class="ctx-item" data-action="evidence">Show evidence</div>
+    <div class="ctx-item" data-action="mark">Mark as priority</div>
+    <div class="ctx-item" data-action="kodex">File KODEX Request</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item" data-action="dm">Open DM channel</div>
+    <div class="ctx-item" data-action="arrest">Submit arrest warrant</div>
+</div>
+
+<!-- DM MODAL (NIGHTJAR) -->
+<div class="dm-modal-bg" id="nj-dm-modal">
+    <div class="dm-modal">
+        <div class="dm-head">
+            <span class="name" id="nj-dm-name">DM</span>
+            <button class="btn ghost" style="padding:2px 10px;" id="nj-dm-close">✕</button>
+        </div>
+        <div class="dm-body" id="nj-dm-body"></div>
+    </div>
+</div>
+
+<div class="toast-stack" id="toast-stack"></div>
+
+<script>
+(() => {
+    'use strict';
+
+    /* ================================================================
+       SHARED UTILITIES
+       ================================================================ */
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s).replace(/[&<>"']/g, c => (
+        { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]
+    ));
+
+    function toast(title, desc, type = '') {
+        const stack = $('toast-stack');
+        const el = document.createElement('div');
+        el.className = 'toast ' + type;
+        el.innerHTML = `<div class="toast-title">${esc(title)}</div><div class="toast-desc">${esc(desc)}</div>`;
+        stack.appendChild(el);
+        setTimeout(() => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateX(20px)';
+            el.style.transition = 'all 0.3s';
+            setTimeout(() => el.remove(), 350);
+        }, 4500);
+    }
+
+    /* ================================================================
+       GLOBAL SHARED STATE (cross-module)
+       ================================================================ */
+    const SHARED = {
+        unmaskedHandles: new Set(),
+        prioritySuspects: new Set(),
+        intelFeed: [],
+        clearedServers: new Set(),   // scenario IDs that have been won
+        activeScenarioId: null,
+        activeSuspects: [],
+        suspectData: {
+            // THE VAULT
+            'voidwalker': { discordId: '847392616204857', realName: 'REDACTED', ip: '185.220.101.42', location: 'Berlin, DE' },
+            'nyx_0x00':   { discordId: '392847116400298', realName: 'REDACTED', ip: '91.219.236.17',  location: 'Kyiv, UA' },
+            'ghostbyte':  { discordId: '662810934001827', realName: 'REDACTED', ip: '5.188.62.140',   location: 'Moscow, RU' },
+            'sable_fang': { discordId: '918273645009182', realName: 'REDACTED', ip: '45.133.1.88',    location: 'Lagos, NG' },
+            'null_knight':{ discordId: '146729381004612', realName: 'REDACTED', ip: '203.0.113.9',    location: 'Toronto, CA' },
+            // SCRIPT KIDDIES
+            'kR4k3n_b0ss':{ discordId: '112233445566778', realName: 'REDACTED', ip: '198.51.100.7',   location: 'Unknown' },
+            'xX_DDoS_Xx': { discordId: '223344556677889', realName: 'REDACTED', ip: '198.51.100.8',   location: 'Unknown' },
+            'weeb_h4x0r': { discordId: '334455667788990', realName: 'REDACTED', ip: '198.51.100.9',   location: 'Unknown' },
+            'zer0_c00l':  { discordId: '445566778899001', realName: 'REDACTED', ip: '198.51.100.10',  location: 'Unknown' },
+            'anon_pizza': { discordId: '556677889900112', realName: 'REDACTED', ip: '198.51.100.11',  location: 'Unknown' },
+            // GHOST PROTOCOL
+            'cerberus_9': { discordId: '667788990011223', realName: 'REDACTED', ip: '198.51.100.12',  location: 'Unknown' },
+            'red_phoenix':{ discordId: '778899001122334', realName: 'REDACTED', ip: '198.51.100.13',  location: 'Unknown' },
+            'gambit_77':  { discordId: '889900112233445', realName: 'REDACTED', ip: '198.51.100.14',  location: 'Unknown' },
+            'wraith_00':  { discordId: '990011223344556', realName: 'REDACTED', ip: '198.51.100.15',  location: 'Unknown' },
+            'kyoto_blade':{ discordId: '001122334455667', realName: 'REDACTED', ip: '198.51.100.16',  location: 'Unknown' },
+            'silent_echo':{ discordId: '112233445566778', realName: 'REDACTED', ip: '198.51.100.17',  location: 'Unknown' },
+            'mnemosyne':  { discordId: '223344556677889', realName: 'REDACTED', ip: '198.51.100.18',  location: 'Unknown' },
+            // HELIO CROSSOVER
+            'obsidian_actual': { discordId: '334455667788990', realName: 'REDACTED', ip: '198.51.100.19', location: 'Unknown' },
+            'meridian_op':    { discordId: '445566778899001', realName: 'REDACTED', ip: '198.51.100.20', location: 'Unknown' },
+            'canopy_fin':     { discordId: '556677889900112', realName: 'REDACTED', ip: '198.51.100.21', location: 'Unknown' },
+            'kestrel_run':    { discordId: '667788990011223', realName: 'REDACTED', ip: '198.51.100.22', location: 'Unknown' },
+            'nightjar_bot':   { discordId: '778899001122334', realName: 'REDACTED', ip: '198.51.100.23', location: 'Unknown' },
+            // NEW SERVERS
+            'helix_wraith':   { discordId: '889900112233445', realName: 'REDACTED', ip: '198.51.100.24', location: 'Unknown' },
+            'viper_actual':   { discordId: '990011223344556', realName: 'REDACTED', ip: '198.51.100.25', location: 'Unknown' },
+            'zero_day_king':  { discordId: '001122334455667', realName: 'REDACTED', ip: '198.51.100.26', location: 'Unknown' },
+            'cipher_lord':    { discordId: '112233445566778', realName: 'REDACTED', ip: '198.51.100.27', location: 'Unknown' },
+            'phantom_ops':    { discordId: '223344556677889', realName: 'REDACTED', ip: '198.51.100.28', location: 'Unknown' },
+            'grim_reaper':    { discordId: '334455667788990', realName: 'REDACTED', ip: '198.51.100.29', location: 'Unknown' },
+        },
+    };
+
+    function addIntel(entry) {
+        SHARED.intelFeed.unshift({ ...entry, time: Date.now() });
+        renderIntelFeed();
+    }
+
+    function renderIntelFeed() {
+        const body = $('intel-feed-body');
+        if (!body) return;
+        if (!SHARED.intelFeed.length) {
+            body.innerHTML = '<div class="empty-state">No intel yet. File requests and collect evidence.</div>';
+            return;
+        }
+        body.innerHTML = SHARED.intelFeed.map(e => `
+            <div class="intel-feed-item">
+                <span class="time">${new Date(e.time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
+                <span class="src">[${esc(e.source)}]</span>
+                ${esc(e.text)}
+            </div>
+        `).join('');
+    }
+
+    /* ================================================================
+       KODEX PORTAL MODULE
+       ================================================================ */
+    const KODEX = (() => {
+        let state = null;
+        const SCENARIO = {
+            caseNumber: 'NIGHTJAR-2025-0417',
+            durationMs: 20 * 60 * 1000,
+        };
+
+        function freshState() {
+            return {
+                started: Date.now(),
+                running: true,
+                requests: [],
+                selectedRequest: null,
+                nextRequestId: 417,
+                caseNumber: SCENARIO.caseNumber,
+                unmaskedHandles: new Set(),
+                endTriggered: false,
+                feedTimers: [],
+            };
+        }
+
+        function isUnlockable(handle) {
+            return SHARED.suspectData[handle.toLowerCase()] !== undefined;
+        }
+
+        function createRequest({ platform, type, subject, caseNum, notes }) {
+            const id = `DISC-2025-${String(state.nextRequestId).padStart(4, '0')}`;
+            state.nextRequestId++;
+            const req = {
+                id, platform, type,
+                subject: subject || '(not specified)',
+                caseNumber: caseNum, notes,
+                status: 'In Progress',
+                statusClass: 'status-progress',
+                createdAt: Date.now(), updatedAt: Date.now(),
+                timeline: [{
+                    time: Date.now(), marker: 'blue', icon: '→',
+                    title: 'Request submitted',
+                    desc: `Initial ${type} request received and assigned to Kodex.`,
+                }],
+                unlockedData: null,
+            };
+            state.requests.unshift(req);
+            addIntel({
+                source: 'KODEX',
+                text: `Filed ${type} request ${id} for "${subject}" on ${platform}.`,
+            });
+            scheduleResponse(req);
+            return req;
+        }
+
+        function scheduleResponse(req) {
+            const delay = req.platform === 'discord' ? 12000 + Math.random() * 8000 : 20000 + Math.random() * 10000;
+            const timer = setTimeout(() => {
+                if (!state.running) return;
+                handleResponse(req);
+            }, delay);
+            state.feedTimers.push(timer);
+        }
+
+        function handleResponse(req) {
+            if (!state.running) return;
+            const subject = req.subject.toLowerCase();
+            const unlockable = isUnlockable(subject);
+
+            if (req.type === 'legal' && req.platform === 'discord' && unlockable && !state.unmaskedHandles.has(subject)) {
+                req.status = 'Completed';
+                req.statusClass = 'status-completed';
+                state.unmaskedHandles.add(subject);
+                SHARED.unmaskedHandles.add(subject);
+                req.unlockedData = SHARED.suspectData[subject];
+                req.timeline.push({
+                    time: Date.now(), marker: 'green', icon: '✓',
+                    title: 'Request completed',
+                    desc: `Discord produced subscriber records for "${subject}". Records added to case file.`,
+                });
+                addIntel({
+                    source: 'KODEX',
+                    text: `UNMASKED: "${subject}" via Discord legal process ${req.id}. Data forwarded to Nightjar.`,
+                });
+                toast(`🔓 UNMASKED — ${subject}`, 'Discord produced records. Open Nightjar to see unmasked data.', 'success');
+                if (typeof NIGHTJAR !== 'undefined' && NIGHTJAR.onUnmask) {
+                    NIGHTJAR.onUnmask(subject, SHARED.suspectData[subject]);
+                }
+            } else if (req.type === 'preservation' && req.platform === 'discord') {
+                req.status = 'Completed';
+                req.statusClass = 'status-completed';
+                req.timeline.push({
+                    time: Date.now(), marker: 'green', icon: '✓',
+                    title: 'Preservation confirmed',
+                    desc: 'Discord will preserve data for 90 days. Legal process can now proceed.',
+                });
+                addIntel({ source: 'KODEX', text: `Preservation confirmed for "${req.subject}".` });
+                toast(`Preservation — ${req.id}`, 'Discord confirmed 90-day preservation window.', 'success');
+            } else if (req.type === 'emergency' && req.platform === 'discord') {
+                req.status = 'Escalated';
+                req.statusClass = 'status-escalated';
+                req.timeline.push({
+                    time: Date.now(), marker: 'red', icon: '!',
+                    title: 'Supervisor authorization required',
+                    desc: 'Emergency Disclosure requires Form ED-7.',
+                });
+                toast(`${req.id} — Escalated`, 'Emergency Disclosure requires Form ED-7.', 'warn');
+            } else if (req.type === 'takedown') {
+                req.status = 'Completed';
+                req.statusClass = 'status-completed';
+                req.timeline.push({
+                    time: Date.now(), marker: 'green', icon: '✓',
+                    title: 'Takedown processed', desc: 'Content removed by platform Trust & Safety.',
+                });
+                toast(`Takedown — ${req.id}`, 'Content removed.', 'success');
+            } else {
+                req.status = 'Denied';
+                req.statusClass = 'status-denied';
+                req.timeline.push({
+                    time: Date.now(), marker: 'red', icon: '✕',
+                    title: 'Request denied',
+                    desc: `Platform could not produce records for "${req.subject}".`,
+                });
+                toast(`${req.id} — Denied`, `No records for "${req.subject}".`, 'error');
+            }
+            req.updatedAt = Date.now();
+            renderAll();
+            updateSyncBar();
+        }
+
+        function renderAll() {
+            if (!state) return;
+            renderKPIs();
+            renderRequests();
+            renderDetail();
+        }
+
+        function renderKPIs() {
+            const total = state.requests.length;
+            const progress = state.requests.filter(r => r.status === 'In Progress' || r.status === 'Escalated').length;
+            const unmasked = state.unmaskedHandles.size;
+            $('kpi-total').textContent = total;
+            $('kpi-progress').textContent = progress;
+            $('kpi-unmasked').textContent = unmasked;
+            $('kpi-total-delta').textContent = `↑ ${total} this case`;
+            $('kpi-unmasked-delta').textContent = `${unmasked} of ${Object.keys(SHARED.suspectData).length} possible`;
+        }
+
+        function updateSyncBar() {
+            const unmasked = state.unmaskedHandles.size;
+            const total = Object.keys(SHARED.suspectData).length;
+            const desc = $('intel-sync-desc');
+            if (unmasked === 0) {
+                desc.innerHTML = 'File <b>Discord Legal Process</b> requests to unlock suspect unmasking in Nightjar.';
+            } else if (unmasked < total) {
+                desc.innerHTML = `<b style="color:var(--green-pale);">${unmasked}/${total} suspects unmasked.</b> Cross-reference with Nightjar evidence to identify ringleaders.`;
+            } else {
+                desc.innerHTML = `<b style="color:var(--gold);">All ${total} suspects unmasked.</b> Complete all Nightjar servers to close the case.`;
+            }
+        }
+
+        function renderRequests() {
+            const list = $('request-list');
+            if (!state.requests.length) {
+                list.innerHTML = `<div style="padding:40px 20px; text-align:center; color:var(--text-muted); font-size:0.78rem;">
+                    No requests yet. Click <b style="color:var(--blue-pale);">New Request</b> to begin.
+                </div>`;
+                return;
+            }
+            const search = ($('search-box').value || '').toLowerCase();
+            const filtered = search
+                ? state.requests.filter(r =>
+                    r.id.toLowerCase().includes(search) ||
+                    r.subject.toLowerCase().includes(search) ||
+                    r.platform.toLowerCase().includes(search)
+                )
+                : state.requests;
+            if (!filtered.length) {
+                list.innerHTML = `<div style="padding:40px 20px; text-align:center; color:var(--text-muted); font-size:0.78rem;">No matching requests.</div>`;
+                return;
+            }
+            list.innerHTML = filtered.map(r => `
+                <div class="request-row ${state.selectedRequest === r.id ? 'selected' : ''}" data-id="${r.id}">
+                    <div class="req-id">${esc(r.id)}</div>
+                    <div class="req-platform">
+                        <span class="platform-dot ${esc(r.platform)}">${r.platform[0].toUpperCase()}</span>
+                        <span>${esc(r.platform.charAt(0).toUpperCase() + r.platform.slice(1))}</span>
+                    </div>
+                    <div class="req-type">${esc(formatType(r.type))}</div>
+                    <div class="req-subject">${esc(r.subject)}</div>
+                    <div class="req-status ${r.statusClass}">${esc(r.status)}</div>
+                    <div class="req-time">${esc(formatTime(r.updatedAt))}</div>
+                </div>
+            `).join('');
+            list.querySelectorAll('.request-row').forEach(row => {
+                row.addEventListener('click', () => {
+                    state.selectedRequest = row.dataset.id;
+                    renderRequests();
+                    renderDetail();
+                });
+            });
+        }
+
+        function renderDetail() {
+            const body = $('detail-body');
+            const headId = $('detail-id');
+            const headTags = $('detail-tags');
+            const back = $('detail-back');
+            if (!state.selectedRequest) {
+                headId.textContent = 'No request selected';
+                headTags.innerHTML = '';
+                back.style.display = 'none';
+                body.innerHTML = `<div style="padding:40px 20px; text-align:center; color:var(--text-muted); font-size:0.78rem;">Select a request to view details.</div>`;
+                return;
+            }
+            const req = state.requests.find(r => r.id === state.selectedRequest);
+            if (!req) return;
+            back.style.display = 'flex';
+            headId.textContent = req.id;
+            headTags.innerHTML = `
+                <span class="detail-tag"><span class="platform-dot ${esc(req.platform)}" style="width:12px;height:12px;font-size:0.4rem;">${req.platform[0].toUpperCase()}</span>${esc(req.platform.charAt(0).toUpperCase() + req.platform.slice(1))}</span>
+                <span class="detail-tag">⚖ ${esc(formatType(req.type))}</span>
+                <span class="detail-tag ${req.statusClass}" style="padding:3px 8px; border-radius:4px;">${esc(req.status)}</span>
+            `;
+            const unlockHtml = req.unlockedData ? `
+                <div>
+                    <div class="detail-section-label" style="color:var(--green-pale);">◉ Unmasked Data — Forwarded to Nightjar</div>
+                    <div class="detail-field"><span class="k">Handle</span><span class="v" style="color:var(--green-pale);">${esc(req.subject)}</span></div>
+                    <div class="detail-field"><span class="k">Real Name</span><span class="v">${esc(req.unlockedData.realName)}</span></div>
+                    <div class="detail-field"><span class="k">Discord ID</span><span class="v">${esc(req.unlockedData.discordId)}</span></div>
+                    <div class="detail-field"><span class="k">Last IP</span><span class="v">${esc(req.unlockedData.ip)}</span></div>
+                    <div class="detail-field"><span class="k">Approx Location</span><span class="v">${esc(req.unlockedData.location)}</span></div>
+                </div>
+            ` : '';
+            body.innerHTML = `
+                <div>
+                    <div class="detail-section-label">Request Details</div>
+                    <div class="detail-field"><span class="k">Subject</span><span class="v">${esc(req.subject)}</span></div>
+                    <div class="detail-field"><span class="k">Case Number</span><span class="v">${esc(req.caseNumber)}</span></div>
+                    <div class="detail-field"><span class="k">Request Type</span><span class="v">${esc(formatType(req.type))}</span></div>
+                    <div class="detail-field"><span class="k">Jurisdiction</span><span class="v">U.S. Federal</span></div>
+                    <div class="detail-field"><span class="k">Priority</span><span class="v">${req.type === 'emergency' ? '<span style="color:var(--red-pale);">Emergency</span>' : 'Normal'}</span></div>
+                    ${req.notes ? `<div class="detail-field"><span class="k">Notes</span><span class="v">${esc(req.notes)}</span></div>` : ''}
+                </div>
+                ${unlockHtml}
+                <div>
+                    <div class="detail-section-label">Timeline</div>
+                    <div class="timeline">
+                        ${req.timeline.map(t => `
+                            <div class="tl-item">
+                                <div class="tl-marker ${t.marker}">${t.icon}</div>
+                                <div class="tl-content">
+                                    <div class="tl-time">${esc(formatDateTime(t.time))}</div>
+                                    <div class="tl-title">${esc(t.title)}</div>
+                                    <div class="tl-desc">${esc(t.desc)}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div>
+                    <div class="detail-section-label">Actions</div>
+                    <div class="action-buttons">
+                        ${req.unlockedData ? '<button class="btn purple" id="action-nightjar">◉ View in Nightjar</button>' : ''}
+                        <button class="btn" id="action-msg">Send Message</button>
+                        ${req.status === 'Escalated' ? '<button class="btn primary" id="action-escalate">Escalate to Supervisor</button>' : ''}
+                        ${req.status !== 'Completed' && req.status !== 'Denied' ? '<button class="btn danger" id="action-cancel">Withdraw Request</button>' : ''}
+                    </div>
+                </div>
+            `;
+            const njBtn = $('action-nightjar');
+            if (njBtn) njBtn.addEventListener('click', () => switchPage('nightjar'));
+            const escBtn = $('action-escalate');
+            if (escBtn) escBtn.addEventListener('click', () => escalateRequest(req));
+            const cancelBtn = $('action-cancel');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => {
+                    req.status = 'Closed';
+                    req.statusClass = 'status-closed';
+                    req.timeline.push({
+                        time: Date.now(), marker: 'yellow', icon: '×',
+                        title: 'Request withdrawn', desc: 'Analyst withdrew the request.',
+                    });
+                    toast(`${req.id} — Withdrawn`, 'Request closed by analyst.', '');
+                    renderAll();
+                });
+            }
+            $('action-msg').addEventListener('click', () => {
+                toast('Message', 'Messages feature not yet implemented in this demo.', '');
+            });
+        }
+
+        function escalateRequest(req) {
+            req.timeline.push({
+                time: Date.now(), marker: 'yellow', icon: '↑',
+                title: 'Escalated',
+                desc: 'Escalated to legal attaché. Response window extended.',
+            });
+            req.status = 'In Progress';
+            req.statusClass = 'status-progress';
+            scheduleResponse(req);
+            toast(`${req.id} — Escalated`, 'Legal attaché engaged. Awaiting provider response.', '');
+            renderAll();
+        }
+
+        function formatType(t) {
+            return ({ legal: 'Legal Process', preservation: 'Preservation', emergency: 'Emergency Disclosure', takedown: 'Content Takedown' })[t] || t;
+        }
+
+        function formatTime(ts) {
+            const d = new Date(ts);
+            return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        }
+
+        function formatDateTime(ts) {
+            const d = new Date(ts);
+            const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+            return `${mon} ${String(d.getDate()).padStart(2,'0')}, ${formatTime(ts)}`;
+        }
+
+        function renderTimer() {
+            if (!state || !state.running) return;
+            const elapsed = Date.now() - state.started;
+            const remaining = Math.max(0, SCENARIO.durationMs - elapsed);
+            const m = Math.floor(remaining / 60000);
+            const s = Math.floor((remaining % 60000) / 1000);
+            $('timer-val').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            const badge = $('case-timer');
+            if (remaining < 60000) {
+                badge.classList.add('danger'); badge.classList.remove('warn');
+            } else if (remaining < 300000) {
+                badge.classList.add('warn'); badge.classList.remove('danger');
+            } else {
+                badge.classList.remove('danger'); badge.classList.remove('warn');
+            }
+        }
+
+        function init() {
+            state = freshState();
+            SHARED.unmaskedHandles.forEach(h => state.unmaskedHandles.add(h));
+
+            const modal = $('new-modal');
+            document.querySelectorAll('.type-card').forEach(c => {
+                c.addEventListener('click', () => {
+                    document.querySelectorAll('.type-card').forEach(x => x.classList.remove('selected'));
+                    c.classList.add('selected');
+                });
+            });
+            $('modal-cancel').addEventListener('click', () => modal.classList.remove('open'));
+            modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+            $('modal-submit').addEventListener('click', () => {
+                const platform = $('form-platform').value;
+                const type = document.querySelector('.type-card.selected').dataset.type;
+                const subject = $('form-subject').value.trim();
+                const caseNum = $('form-case').value.trim() || state.caseNumber;
+                const notes = $('form-notes').value.trim();
+                if (!subject) { toast('Missing subject', 'Enter a user handle or server name.', 'error'); return; }
+                const req = createRequest({ platform, type, subject, caseNum, notes });
+                toast(`Request filed — ${req.id}`, `${formatType(type)} sent to ${platform}.`, 'success');
+                modal.classList.remove('open');
+                $('form-subject').value = '';
+                $('form-notes').value = '';
+                state.selectedRequest = req.id;
+                renderAll();
+            });
+            $('search-box').addEventListener('input', renderRequests);
+            $('detail-back').addEventListener('click', () => {
+                state.selectedRequest = null;
+                renderRequests();
+                renderDetail();
+            });
+            $('sync-nightjar-btn').addEventListener('click', () => switchPage('nightjar'));
+            $('sync-intel-feed-btn').addEventListener('click', () => $('intel-feed-modal').classList.add('open'));
+            $('intel-feed-close').addEventListener('click', () => $('intel-feed-modal').classList.remove('open'));
+            $('intel-feed-modal').addEventListener('click', (e) => {
+                if (e.target === $('intel-feed-modal')) $('intel-feed-modal').classList.remove('open');
+            });
+            renderAll();
+            updateSyncBar();
+        }
+
+        return { init, renderTimer, state: () => state, updateSyncBar, unmaskedHandles: () => state.unmaskedHandles };
+    })();
+
+    /* ================================================================
+       NIGHTJAR GAME MODULE
+       ================================================================ */
+    const NIGHTJAR = (() => {
+        let state = null;
+        const LB_KEY = 'nightjar-leaderboard-v2';
+
+        const SCENARIOS = {
+            easy: {
+                id: 'easy',
+                title: 'SCRIPT KIDDIES',
+                icon: '🐣',
+                color: '#3fb950',
+                difficulty: 'easy',
+                desc: 'Low-tier crew. Loud, sloppy, obvious leader.',
+                durationMs: 15 * 60 * 1000,
+                serverName: 'skid-hangout',
+                ringleader: 'kR4k3n_b0ss',
+                channels: ['general', 'drops'],
+                hintCost: 2,
+                hintText: 'The one who talks about cuts and takes the front money. Look for anyone using possessive language ("my op", "my cut", "my call").',
+                suspects: [
+                    { handle: 'kR4k3n_b0ss',  color: '#f85149', joined: '2024-01-02', role: 'Ring leader',    note: 'Founder of the server.' },
+                    { handle: 'xX_DDoS_Xx',   color: '#bc8cff', joined: '2024-01-14', role: 'Muscle',         note: 'Runs the botnets.' },
+                    { handle: 'weeb_h4x0r',   color: '#79c0ff', joined: '2024-02-03', role: 'Script kid',     note: 'Copies pastebin scripts.' },
+                    { handle: 'zer0_c00l',    color: '#d29922', joined: '2024-02-20', role: 'Fence',          note: 'Sells the stolen data.' },
+                    { handle: 'anon_pizza',   color: '#3fb950', joined: '2024-03-08', role: 'Lookout',        note: 'Scouts targets.' },
+                ],
+                messages: {
+                    general: [
+                        { t: 0,  author: 'kR4k3n_b0ss', text: 'aight everyone. new op this weekend. big target.', reactions: [{ emoji: '🔥', count: 4 }] },
+                        { t: 5,  author: 'weeb_h4x0r',  text: 'whats the target???' },
+                        { t: 8,  author: 'kR4k3n_b0ss', text: 'chill. i share when i share. <span class="clue" data-type="hint" data-value="leader withholds intel">opsec.</span>' },
+                        { t: 14, author: 'xX_DDoS_Xx',  text: 'i got <span class="clue" data-type="ip" data-value="45.133.1.88">45.133.1.88</span> ready for the botnet.', reactions: [{ emoji: '👍', count: 2 }] },
+                        { t: 22, author: 'anon_pizza',  text: 'i scouted the target. it runs on <span class="clue" data-type="ip" data-value="203.0.113.9">203.0.113.9</span>.' },
+                        { t: 30, author: 'kR4k3n_b0ss', text: 'good. zer0, i want <span class="clue" data-type="wallet" data-value="bc1qskid00000000000000000000000000000000">bc1qskid00000000000000000000000000000000</span> funded by friday.' },
+                        { t: 40, author: 'zer0_c00l',   text: 'on it. 3k enough?' },
+                        { t: 43, author: 'kR4k3n_b0ss', text: 'make it 5. <span class="clue" data-type="hint" data-value="leader sets the take">my cut this time.</span>', reactions: [{ emoji: '💀', count: 3 }] },
+                        { t: 52, author: 'weeb_h4x0r',  text: 'whats my split?' },
+                        { t: 55, author: 'kR4k3n_b0ss', text: 'you get what i give you.' },
+                        { t: 63, author: 'anon_pizza',  text: 'friday 2100 works?' },
+                        { t: 66, author: 'kR4k3n_b0ss', text: '<span class="clue" data-type="time" data-value="op scheduled friday 2100 UTC">2100. sharp. no excuses.</span>', reactions: [{ emoji: '✅', count: 5 }] },
+                    ],
+                    drops: [
+                        { t: 12, author: 'kR4k3n_b0ss', text: 'drop box: <span class="clue" data-type="wallet" data-value="bc1qdropbox77777777777777777777777777">bc1qdropbox77777777777777777777777777</span>. everything lands there first.' },
+                        { t: 20, author: 'zer0_c00l',   text: 'and then?' },
+                        { t: 22, author: 'kR4k3n_b0ss', text: 'then i move it. <span class="clue" data-type="hint" data-value="leader is the sole wallet mover">nobody else has the key.</span>' },
+                        { t: 35, author: 'xX_DDoS_Xx',  text: 'i moved my share to <span class="clue" data-type="wallet" data-value="bc1qmuscle1111111111111111111111111111">bc1qmuscle1111111111111111111111111111</span>' },
+                        { t: 44, author: 'kR4k3n_b0ss', text: 'you moved BEFORE the drop? amateur.', reactions: [{ emoji: '😂', count: 4 }, { emoji: '💀', count: 2 }] },
+                        { t: 46, author: 'xX_DDoS_Xx',  text: 'sorry boss' },
+                    ],
+                },
+            },
+            normal: {
+                id: 'normal',
+                title: 'THE VAULT',
+                icon: '🏦',
+                color: '#79c0ff',
+                difficulty: 'medium',
+                desc: 'Organized crew. Real money. Misdirection.',
+                durationMs: 10 * 60 * 1000,
+                serverName: 'the-vault',
+                ringleader: 'voidwalker',
+                channels: ['general', 'drops', 'vouch'],
+                hintCost: 5,
+                hintText: 'The coordinator. Watch who gives orders, who takes the largest cut, and who the others defer to under pressure.',
+                suspects: [
+                    { handle: 'voidwalker',  color: '#f85149', joined: '2024-03-11', role: 'Ring leader',   note: 'Frequent poster. Vague about location.' },
+                    { handle: 'nyx_0x00',    color: '#bc8cff', joined: '2024-04-02', role: 'Cryptographer', note: 'Discusses crypto schemes.' },
+                    { handle: 'ghostbyte',   color: '#79c0ff', joined: '2024-05-18', role: 'Infrastructure',note: 'Handles VPNs and hosting.' },
+                    { handle: 'sable_fang',  color: '#d29922', joined: '2024-06-09', role: 'Finance',       note: 'Moves money. Suspicious wallet activity.' },
+                    { handle: 'null_knight', color: '#3fb950', joined: '2024-07-22', role: 'Recruiter',     note: 'Brings new members in.' },
+                ],
+                messages: {
+                    general: [
+                        { t: 0,  author: 'voidwalker',  text: 'new drop scheduled for friday. usual channel.', reactions: [{ emoji: '👀', count: 6 }] },
+                        { t: 4,  author: 'nyx_0x00',    text: 'crypto scheme ready. wallet: <span class="clue" data-type="wallet" data-value="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh">bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh</span>' },
+                        { t: 7,  author: 'ghostbyte',   text: 'routing through <span class="clue" data-type="ip" data-value="185.220.101.42">185.220.101.42</span>. tails friendly.' },
+                        { t: 11, author: 'voidwalker',  text: 'good. everyone on irc at <span class="clue" data-type="time" data-value="2100 UTC">2100 UTC</span> sharp.' },
+                        { t: 15, author: 'null_knight', text: 'brought in two new bodies. handles incoming.' },
+                        { t: 24, author: 'voidwalker',  text: 'nyx - key rotation tonight. dont fuck it up.' },
+                        { t: 27, author: 'nyx_0x00',    text: 'relax. opsec is fine. <span class="clue" data-type="hint" data-value="key rotation at 0200 UTC">scheduled for 0200</span>.' },
+                        { t: 33, author: 'ghostbyte',   text: 'new endpoint up. <span class="clue" data-type="ip" data-value="91.219.236.17">91.219.236.17</span> for backups.' },
+                        { t: 68, author: 'voidwalker',  text: 'too late. this server is burned. rotate everything.' },
+                        { t: 78, author: 'voidwalker',  text: 'shut up. i run this. if anyone talks i know where to find them.', reactions: [{ emoji: '😬', count: 3 }] },
+                        { t: 130, author: 'voidwalker', text: 'i said no. i decide. always have.' },
+                        { t: 168, author: 'null_knight', text: 'clear boss' },
+                    ],
+                    drops: [
+                        { t: 3,  author: 'voidwalker',  text: 'drop box for this op: <span class="clue" data-type="wallet" data-value="bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq">bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq</span>' },
+                        { t: 20, author: 'sable_fang',  text: 'fiat side cleared. <span class="clue" data-type="wallet" data-value="0x71C7656EC7ab88b098defB751B7401B5f6d8976F">0x71C7656EC7ab88b098defB751B7401B5f6d8976F</span> is next.' },
+                        { t: 38, author: 'sable_fang',  text: 'confirming: payout split as usual? 40/30/30?' },
+                        { t: 41, author: 'voidwalker',  text: 'close. 50/25/25. i take the front.' },
+                        { t: 92, author: 'voidwalker',  text: 'payout still on. same time, same place. i coordinate the drops. always have.' },
+                        { t: 99, author: 'nyx_0x00',    text: 'wallets updated. <span class="clue" data-type="wallet" data-value="bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq">bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq</span> is the new primary.' },
+                    ],
+                    vouch: [
+                        { t: 10, author: 'null_knight', text: 'new handle: <span class="clue" data-type="name" data-value="ashborn">ashborn</span>. young. eager.' },
+                        { t: 14, author: 'voidwalker',  text: 'eager is a liability. watch him.' },
+                        { t: 60, author: 'null_knight', text: 'vouching for him. trained under me.' },
+                        { t: 65, author: 'voidwalker',  text: 'your vouch. your problem. if he fucks up, you answer.' },
+                    ],
+                },
+                dms: [
+                    { triggerAt: 8000, from: 'nyx_0x00', text: 'hey. something feels off about this drop. you noticed?' },
+                    { triggerAt: 45000, from: 'voidwalker', text: 'you. i know what you are. back off or i take you with us.' },
+                    { triggerAt: 90000, from: 'sable_fang', text: 'if i flip, do i get immunity? asking for a friend.' },
+                ],
+            },
+            tough: {
+                id: 'tough',
+                title: 'GHOST PROTOCOL',
+                icon: '👻',
+                color: '#f85149',
+                difficulty: 'hard',
+                desc: 'Professional crew. Active cover-up. Multiple false trails.',
+                durationMs: 8 * 60 * 1000,
+                serverName: 'null-sector',
+                ringleader: 'cerberus_9',
+                channels: ['general', 'drops', 'vouch', 'off-topic'],
+                hintCost: 10,
+                hintText: 'The ringleader never uses their own handle for sensitive ops. Watch the "off-topic" channel for the real coordination — the ones who sound casual are the ones in charge.',
+                suspects: [
+                    { handle: 'cerberus_9',  color: '#f85149', joined: '2023-12-01', role: 'Ring leader',    note: 'Rarely active. Uses puppets.' },
+                    { handle: 'red_phoenix', color: '#bc8cff', joined: '2024-01-08', role: 'Lieutenant',     note: 'Talks like a leader. Is not.' },
+                    { handle: 'wraith_00',   color: '#79c0ff', joined: '2024-02-15', role: 'Infrastructure', note: 'Handles routing.' },
+                    { handle: 'kyoto_blade', color: '#d29922', joined: '2024-03-22', role: 'Finance',        note: 'Launders via JP exchanges.' },
+                    { handle: 'silent_echo', color: '#3fb950', joined: '2024-04-30', role: 'Recruiter',      note: 'Runs the vouch channel.' },
+                    { handle: 'gambit_77',   color: '#f778ba', joined: '2024-05-19', role: 'Decoy',          note: 'Compromised account. Used as a shield.' },
+                    { handle: 'mnemosyne',   color: '#79c0ff', joined: '2024-06-11', role: 'Scribe',         note: 'Keeps the ledger.' },
+                ],
+                messages: {
+                    general: [
+                        { t: 0,  author: 'red_phoenix', text: 'op is a go. everyone get ready.', reactions: [{ emoji: '🔥', count: 5 }] },
+                        { t: 8,  author: 'wraith_00',   text: 'routing locked. <span class="clue" data-type="ip" data-value="5.188.62.140">5.188.62.140</span> for ingress, <span class="clue" data-type="ip" data-value="91.219.236.17">91.219.236.17</span> for egress.' },
+                        { t: 15, author: 'red_phoenix', text: 'i want updates every hour. no excuses.' },
+                        { t: 22, author: 'kyoto_blade', text: 'yen rail ready. <span class="clue" data-type="wallet" data-value="bc1qjp0x000000000000000000000000000000">bc1qjp0x000000000000000000000000000000</span> funded.' },
+                        { t: 30, author: 'silent_echo', text: 'brought in 3 new. all clean.' },
+                        { t: 40, author: 'gambit_77',   text: 'hey guys what op we doing again?' },
+                        { t: 43, author: 'red_phoenix', text: 'gambit, check your dms. <span class="clue" data-type="hint" data-value="red_phoenix redirects public ops talk to DMs">not here.</span>' },
+                        { t: 55, author: 'mnemosyne',   text: 'ledger updated. <span class="clue" data-type="hint" data-value="ledger is updated by mnemosyne but authorized by cerberus_9">all authorized.</span>' },
+                        { t: 68, author: 'gambit_77',   text: 'why am i always the last to know' },
+                        { t: 75, author: 'red_phoenix', text: 'because you talk too much.' },
+                        { t: 88, author: 'kyoto_blade', text: 'we good on the off-topic side?' },
+                        { t: 92, author: 'red_phoenix', text: 'ask <span class="clue" data-type="name" data-value="cerberus_9">cerberus</span>. that channel is his.' },
+                    ],
+                    drops: [
+                        { t: 5,  author: 'red_phoenix', text: 'drop box for this run: <span class="clue" data-type="wallet" data-value="bc1qnight0000000000000000000000000000">bc1qnight0000000000000000000000000000</span>' },
+                        { t: 18, author: 'mnemosyne',   text: 'recorded. signing off on split 40/30/30.' },
+                        { t: 50, author: 'red_phoenix', text: 'split confirmed.' },
+                        { t: 62, author: 'wraith_00',   text: 'backup drop if primary burns: <span class="clue" data-type="wallet" data-value="bc1qbackup777777777777777777777777777">bc1qbackup777777777777777777777777777</span>' },
+                    ],
+                    vouch: [
+                        { t: 12, author: 'silent_echo', text: 'new vouchers incoming. ashborn and bex.' },
+                        { t: 20, author: 'red_phoenix', text: 'ashborn is fine. bex is <span class="clue" data-type="hint" data-value="red_phoenix flags bex as compromised">noise</span>.' },
+                        { t: 35, author: 'silent_echo', text: 'noted. cutting her off.' },
+                        { t: 60, author: 'red_phoenix', text: 'wait. before you do. <span class="clue" data-type="hint" data-value="red_phoenix says he has to check with someone above him">let me check.</span>' },
+                    ],
+                    'off-topic': [
+                        { t: 3,  author: 'cerberus_9',  text: 'morning.' },
+                        { t: 20, author: 'cerberus_9',  text: 'red, status?' },
+                        { t: 26, author: 'red_phoenix', text: 'all green. gambling has the wallets.' },
+                        { t: 30, author: 'cerberus_9',  text: 'good. and the ledger?' },
+                        { t: 34, author: 'mnemosyne',   text: 'signed. <span class="clue" data-type="hint" data-value="mnemosyne defers to cerberus_9 for all ledger authorizations">by your authority.</span>' },
+                        { t: 45, author: 'cerberus_9',  text: 'red. do not say my name in the other channels again.' },
+                        { t: 50, author: 'red_phoenix', text: 'understood.' },
+                        { t: 66, author: 'cerberus_9',  text: 'if gambit becomes a liability, cut him loose. <span class="clue" data-type="hint" data-value="cerberus_9 decides who stays or goes — this is leadership">i decide.</span>', reactions: [{ emoji: '⚠️', count: 4 }] },
+                        { t: 82, author: 'kyoto_blade', text: 'yen rail moves tomorrow. when do you want it?' },
+                        { t: 86, author: 'cerberus_9',  text: '<span class="clue" data-type="time" data-value="cerberus_9 sets the yen rail move time">2100. same as always.</span>' },
+                        { t: 100, author: 'cerberus_9', text: 'anyone have issues with the plan?' },
+                        { t: 104, author: 'wraith_00',  text: 'none.' },
+                        { t: 106, author: 'kyoto_blade', text: 'none.' },
+                        { t: 108, author: 'mnemosyne',   text: 'none.' },
+                        { t: 112, author: 'red_phoenix', text: 'we are good.' },
+                    ],
+                },
+                dms: [
+                    { triggerAt: 6000, from: 'red_phoenix', text: 'you need to leave. this is bigger than you think.' },
+                    { triggerAt: 30000, from: 'gambit_77', text: 'im a decoy arent i. theyre gonna burn me. help' },
+                    { triggerAt: 75000, from: 'cerberus_9', text: 'i am the only one who gets to end this. not red, not you.' },
+                ],
+            },
+            'black-ice': {
+                id: 'black-ice',
+                title: 'BLACK ICE',
+                icon: '🧊',
+                color: '#06b6d4',
+                difficulty: 'hard',
+                desc: 'Ransomware affiliate. Rival cells. Traitors in the ranks.',
+                durationMs: 9 * 60 * 1000,
+                serverName: 'black-ice-reloaded',
+                ringleader: 'zero_day_king',
+                channels: ['general', 'negotiations', 'affiliates', 'leaks'],
+                hintCost: 15,
+                hintText: 'Multiple cells. Only one true king. Watch the "negotiations" channel — the one who sets the ransom split and other cells defer to is the leader.',
+                suspects: [
+                    { handle: 'zero_day_king', color: '#f85149', joined: '2023-06-01', role: 'Ring leader',    note: 'Sets all ransom terms.' },
+                    { handle: 'phantom_ops',   color: '#bc8cff', joined: '2023-08-14', role: 'Cell leader A',  note: 'Runs the APAC crew.' },
+                    { handle: 'grim_reaper',   color: '#79c0ff', joined: '2023-09-22', role: 'Cell leader B',  note: 'Runs the EU crew.' },
+                    { handle: 'cipher_lord',   color: '#d29922', joined: '2023-11-08', role: 'Negotiator',     note: 'Talks to victims.' },
+                    { handle: 'helix_wraith',  color: '#3fb950', joined: '2024-01-19', role: 'Traitor',        note: 'Double agent? Watch carefully.' },
+                    { handle: 'viper_actual',  color: '#f778ba', joined: '2024-02-27', role: 'Enforcer',       note: 'Handles threats.' },
+                ],
+                messages: {
+                    general: [
+                        { t: 0,  author: 'zero_day_king', text: 'quarterly review. new targets drop friday.', reactions: [{ emoji: '💰', count: 7 }] },
+                        { t: 8,  author: 'phantom_ops',   text: 'APAC cell ready. <span class="clue" data-type="ip" data-value="203.0.113.44">203.0.113.44</span> for C2.' },
+                        { t: 14, author: 'grim_reaper',   text: 'EU cell ready. <span class="clue" data-type="ip" data-value="198.51.100.66">198.51.100.66</span> for C2.' },
+                        { t: 22, author: 'zero_day_king', text: 'good. <span class="clue" data-type="wallet" data-value="bc1qblackice000000000000000000000000000">bc1qblackice000000000000000000000000000</span> is the master wallet.' },
+                        { t: 35, author: 'cipher_lord',   text: 'ransom tiers: 5M base, 10M if they stall.' },
+                        { t: 42, author: 'zero_day_king', text: 'make base 7. <span class="clue" data-type="hint" data-value="leader sets ransom floors — nobody overrides">my call.</span>' },
+                        { t: 55, author: 'helix_wraith',  text: 'heard chatter about a fed op. should we pull back?' },
+                        { t: 62, author: 'zero_day_king', text: 'no. we finish. <span class="clue" data-type="hint" data-value="leader overrides security concerns — overconfidence">nobody knows we exist.</span>' },
+                        { t: 78, author: 'viper_actual',  text: 'who wants to handle the "compliance" calls?' },
+                        { t: 85, author: 'cipher_lord',   text: 'me. i like hearing them beg.', reactions: [{ emoji: '😈', count: 3 }] },
+                    ],
+                    negotiations: [
+                        { t: 10, author: 'zero_day_king', text: 'rules: no discounts. no extensions. <span class="clue" data-type="hint" data-value="zero_day_king sets negotiation rules for all cells">my rules.</span>' },
+                        { t: 30, author: 'grim_reaper',   text: 'EU target offered 3M. declining per protocol.' },
+                        { t: 33, author: 'zero_day_king', text: 'good. hold at 7.' },
+                        { t: 50, author: 'phantom_ops',   text: 'APAC target paying. <span class="clue" data-type="wallet" data-value="bc1qapac7777777777777777777777777777">bc1qapac7777777777777777777777777777</span> incoming.' },
+                        { t: 65, author: 'zero_day_king', text: 'sweep it to master at <span class="clue" data-type="wallet" data-value="bc1qblackice000000000000000000000000000">bc1qblackice000000000000000000000000000</span>.' },
+                        { t: 90, author: 'helix_wraith',  text: 'should i take a smaller cut this round?' },
+                        { t: 95, author: 'zero_day_king', text: 'no. <span class="clue" data-type="hint" data-value="zero_day_king refuses to change payout split — leader authority">split stays. end of discussion.</span>' },
+                    ],
+                    affiliates: [
+                        { t: 20, author: 'phantom_ops', text: 'vouching for a new affiliate. handle: <span class="clue" data-type="name" data-value="silent_mark">silent_mark</span>.' },
+                        { t: 26, author: 'zero_day_king', text: 'fine. keep him on a short leash.' },
+                        { t: 40, author: 'grim_reaper', text: 'another vouch: <span class="clue" data-type="name" data-value="iron_veil">iron_veil</span>.' },
+                        { t: 45, author: 'zero_day_king', text: 'denied. <span class="clue" data-type="hint" data-value="leader denies unverified affiliates">not vetted.</span>' },
+                    ],
+                    leaks: [
+                        { t: 48, author: 'helix_wraith', text: 'i found a leak. someone in the EU cell is talking.' },
+                        { t: 54, author: 'zero_day_king', text: 'who?' },
+                        { t: 58, author: 'helix_wraith', text: '<span class="clue" data-type="hint" data-value="helix_wraith points at grim_reaper but has no proof">grim_reaper.</span>', reactions: [{ emoji: '😱', count: 2 }] },
+                        { t: 65, author: 'grim_reaper',  text: 'bullshit. that account is compromised.' },
+                        { t: 70, author: 'zero_day_king', text: 'both of you shut up. <span class="clue" data-type="hint" data-value="leader shuts down infighting — keeps control">i will handle it.</span>' },
+                        { t: 88, author: 'cipher_lord',  text: 'helix has been weird lately. think hes the rat?' },
+                        { t: 92, author: 'zero_day_king', text: 'quiet. all of you. <span class="clue" data-type="hint" data-value="zero_day_king silences the room — absolute authority">i decide who is the rat.</span>' },
+                    ],
+                },
+                dms: [
+                    { triggerAt: 7000, from: 'helix_wraith', text: 'they suspect me. i need out. i have intel on the master wallet.' },
+                    { triggerAt: 35000, from: 'zero_day_king', text: 'you are either with me or gone. choose.' },
+                    { triggerAt: 80000, from: 'grim_reaper', text: 'helix is the leak. i have proof. do i send?' },
+                ],
+            },
+            'dark-market': {
+                id: 'dark-market',
+                title: 'DARK MARKET',
+                icon: '🕳️',
+                color: '#f778ba',
+                difficulty: 'medium',
+                desc: 'Underground marketplace. Sellers, buyers, and one mastermind.',
+                durationMs: 11 * 60 * 1000,
+                serverName: 'underground-market',
+                ringleader: 'cipher_lord',
+                channels: ['marketplace', 'reviews', 'admin'],
+                hintCost: 8,
+                hintText: 'The marketplace owner takes a cut on every transaction. The one who sets the commission rate runs the market.',
+                suspects: [
+                    { handle: 'cipher_lord',   color: '#f85149', joined: '2023-04-01', role: 'Market Owner',  note: 'Sets commission rates.' },
+                    { handle: 'phantom_ops',   color: '#bc8cff', joined: '2023-06-14', role: 'Top Seller',    note: 'Best reputation. Not the owner.' },
+                    { handle: 'grim_reaper',   color: '#79c0ff', joined: '2023-08-22', role: 'Escrow',        note: 'Holds funds, but not master.' },
+                    { handle: 'silent_echo',   color: '#d29922', joined: '2023-10-08', role: 'Reviewer',      note: 'Writes reviews.' },
+                    { handle: 'nightjar_bot',  color: '#3fb950', joined: '2024-01-19', role: 'Relay Bot',     note: 'Automated moderation.' },
+                ],
+                messages: {
+                    marketplace: [
+                        { t: 0,  author: 'cipher_lord',  text: 'new listings accepted. commission 12%. <span class="clue" data-type="hint" data-value="cipher_lord sets the commission rate — market owner">rate locked.</span>' },
+                        { t: 12, author: 'phantom_ops',  text: 'listing a database dump. 50k records. starting at 2 BTC.' },
+                        { t: 20, author: 'grim_reaper',  text: 'escrow accepted. <span class="clue" data-type="wallet" data-value="bc1qescrow000000000000000000000000000">bc1qescrow000000000000000000000000000</span>' },
+                        { t: 35, author: 'silent_echo',  text: 'vouch: phantom is solid. bought twice.', reactions: [{ emoji: '👍', count: 6 }] },
+                        { t: 48, author: 'cipher_lord',  text: 'commission check. <span class="clue" data-type="wallet" data-value="bc1qmarketowner00000000000000000000000">bc1qmarketowner00000000000000000000000</span> receives the cut.' },
+                        { t: 62, author: 'phantom_ops',  text: 'received payout. escrow released.' },
+                        { t: 75, author: 'grim_reaper',  text: 'releasing now. all good.' },
+                    ],
+                    reviews: [
+                        { t: 8,  author: 'silent_echo',  text: 'review: phantom_ops 5/5. clean data.' },
+                        { t: 25, author: 'silent_echo',  text: 'review: grim_reaper escrow 5/5. fast.' },
+                        { t: 42, author: 'silent_echo',  text: 'review: cipher_lord runs the tightest market on Tor. <span class="clue" data-type="hint" data-value="silent_echo praises cipher_lord as market runner">respect.</span>' },
+                        { t: 58, author: 'phantom_ops',  text: 'thanks cipher. smooth as always.' },
+                    ],
+                    admin: [
+                        { t: 3,  author: 'cipher_lord',  text: 'rule 1: no scams. rule 2: commission always paid. <span class="clue" data-type="hint" data-value="cipher_lord enforces admin rules — owner authority">my rules.</span>' },
+                        { t: 30, author: 'nightjar_bot', text: '▶ automated scan complete. no anomalies.' },
+                        { t: 55, author: 'grim_reaper',  text: 'should we raise commission for premium sellers?' },
+                        { t: 58, author: 'cipher_lord',  text: 'no. <span class="clue" data-type="hint" data-value="cipher_lord refuses to change rates — sole authority">stays at 12.</span>' },
+                        { t: 80, author: 'phantom_ops',  text: 'understood.' },
+                    ],
+                },
+                dms: [
+                    { triggerAt: 9000, from: 'phantom_ops', text: 'is it true cipher takes a cut off every escrow release?' },
+                    { triggerAt: 40000, from: 'cipher_lord', text: 'you are on thin ice. do not test me.' },
+                ],
+            },
+            'ghost-net': {
+                id: 'ghost-net',
+                title: 'GHOST NET',
+                icon: '🕸️',
+                color: '#8b5cf6',
+                difficulty: 'hard',
+                desc: 'Spy network. Codenames. Nobody is who they say.',
+                durationMs: 9 * 60 * 1000,
+                serverName: 'ghost-net-7',
+                ringleader: 'obsidian_actual',
+                channels: ['general', 'handlers', 'dead-drop'],
+                hintCost: 12,
+                hintText: 'Every operative reports to a handler. Find the one who assigns handlers, and you find the network controller.',
+                suspects: [
+                    { handle: 'obsidian_actual', color: '#f85149', joined: '2023-01-01', role: 'Controller',    note: 'Assigns all handlers.' },
+                    { handle: 'meridian_op',     color: '#bc8cff', joined: '2023-03-14', role: 'Handler EU',    note: 'Handles EU operatives.' },
+                    { handle: 'canopy_fin',      color: '#79c0ff', joined: '2023-05-22', role: 'Handler APAC',  note: 'Handles APAC operatives.' },
+                    { handle: 'kestrel_run',     color: '#d29922', joined: '2023-08-08', role: 'Courier',       note: 'Physical drops.' },
+                    { handle: 'nightjar_bot',    color: '#3fb950', joined: '2024-01-19', role: 'Relay',         note: 'Automated dead-drop relay.' },
+                    { handle: 'helix_wraith',    color: '#f778ba', joined: '2024-03-27', role: 'Operative',     note: 'Field agent. Rogue?' },
+                ],
+                messages: {
+                    general: [
+                        { t: 0,  author: 'obsidian_actual', text: 'network check. all handlers report.' },
+                        { t: 10, author: 'meridian_op',     text: 'EU green. <span class="clue" data-type="hint" data-value="meridian reports to obsidian">standing by.</span>' },
+                        { t: 18, author: 'canopy_fin',      text: 'APAC green. <span class="clue" data-type="hint" data-value="canopy reports to obsidian">standing by.</span>' },
+                        { t: 30, author: 'obsidian_actual', text: 'kestrel - dead drop rotation tonight. <span class="clue" data-type="wallet" data-value="bc1qdeadrop0000000000000000000000000000">bc1qdeadrop0000000000000000000000000000</span>.' },
+                        { t: 42, author: 'kestrel_run',     text: 'acknowledged.' },
+                        { t: 55, author: 'helix_wraith',    text: 'i want out. this is too much.' },
+                        { t: 62, author: 'obsidian_actual', text: 'no one leaves. <span class="clue" data-type="hint" data-value="controller decides who leaves — absolute authority">no one.</span>' },
+                        { t: 80, author: 'helix_wraith',    text: 'understood.', reactions: [{ emoji: '😰', count: 2 }] },
+                    ],
+                    handlers: [
+                        { t: 15, author: 'obsidian_actual', text: 'new operative <span class="clue" data-type="name" data-value="shadow_cell">shadow_cell</span>. assigned to meridian.' },
+                        { t: 25, author: 'meridian_op',     text: 'roger. running vetting now.' },
+                        { t: 50, author: 'obsidian_actual', text: 'canopy - your last drop was late. <span class="clue" data-type="hint" data-value="controller disciplines handlers — chain of command">do not repeat.</span>' },
+                        { t: 58, author: 'canopy_fin',      text: 'copy.' },
+                        { t: 75, author: 'obsidian_actual', text: 'any questions about assignments?' },
+                        { t: 82, author: 'meridian_op',     text: 'none.' },
+                        { t: 84, author: 'canopy_fin',      text: 'none.' },
+                    ],
+                    'dead-drop': [
+                        { t: 5,  author: 'nightjar_bot',   text: '▶ dead drop active. <span class="clue" data-type="ip" data-value="185.220.101.99">185.220.101.99</span>' },
+                        { t: 22, author: 'kestrel_run',    text: 'drop 1 complete. next at <span class="clue" data-type="time" data-value="0200 UTC">0200</span>.' },
+                        { t: 40, author: 'obsidian_actual', text: 'confirmed. <span class="clue" data-type="hint" data-value="obsidian confirms all drops — controller authority">proceed.</span>' },
+                        { t: 65, author: 'kestrel_run',    text: 'requesting extraction. i am burned.' },
+                        { t: 72, author: 'obsidian_actual', text: 'denied. <span class="clue" data-type="hint" data-value="controller denies extraction — absolute control">finish the route.</span>' },
+                    ],
+                },
+                dms: [
+                    { triggerAt: 8000, from: 'helix_wraith', text: 'obsidian is the controller. i can prove it. get me out.' },
+                    { triggerAt: 38000, from: 'obsidian_actual', text: 'helix is compromised. terminate his access.' },
+                    { triggerAt: 85000, from: 'kestrel_run', text: 'obsidian is the one. always has been.' },
+                ],
+            },
+            'helio-crossover': {
+                id: 'helio-crossover',
+                title: 'HELIO CROSSOVER',
+                icon: '★',
+                color: '#ffd966',
+                difficulty: 'special',
+                desc: 'SKIDNET whistleblower lead: the HELIOS cell has a Discord.',
+                durationMs: 8 * 60 * 1000,
+                serverName: 'nightjar-private',
+                ringleader: 'obsidian_actual',
+                channels: ['general', 'drops', 'vouch'],
+                hintCost: 0,
+                hintText: 'You already have the intel. Apply what you learned on SKIDNET. OBSIDIAN is the handler — everyone defers.',
+                suspects: [
+                    { handle: 'obsidian_actual', color: '#ff5f5f', joined: '2025-11-01', role: 'Handler',       note: 'Identified in SKIDNET dossier as OBSIDIAN.' },
+                    { handle: 'meridian_op',     color: '#d29922', joined: '2025-11-08', role: 'Logistics',     note: 'Matches MERIDIAN profile.' },
+                    { handle: 'canopy_fin',      color: '#bc8cff', joined: '2025-11-15', role: 'Finance',       note: 'Matches CANOPY profile.' },
+                    { handle: 'kestrel_run',     color: '#79c0ff', joined: '2025-12-02', role: 'Courier',       note: 'KESTREL. Dormant per dossier.' },
+                    { handle: 'nightjar_bot',    color: '#3fb950', joined: '2025-12-20', role: 'Relay bot',     note: 'Automated relay.' },
+                ],
+                messages: {
+                    general: [
+                        { t: 0,  author: 'nightjar_bot',    text: '▶ relay active. encrypted channel handshake complete.' },
+                        { t: 6,  author: 'meridian_op',     text: 'shipment is en route. <span class="clue" data-type="hint" data-value="meridian uses Karachi origin per SKIDNET dossier">origin: usual.</span>' },
+                        { t: 14, author: 'canopy_fin',      text: 'financing tier 2 confirmed. <span class="clue" data-type="wallet" data-value="bc1qhelio00000000000000000000000000000">bc1qhelio00000000000000000000000000000</span> is live.' },
+                        { t: 24, author: 'kestrel_run',     text: 'i am not moving the package this time. <span class="clue" data-type="hint" data-value="kestrel refuses per original SKIDNET audio">not after last time.</span>' },
+                        { t: 34, author: 'obsidian_actual', text: 'you will move it. <span class="clue" data-type="hint" data-value="OBSIDIAN overrides kestrel — matches standing order authority">the directive stands.</span>' },
+                        { t: 42, author: 'kestrel_run',     text: 'understood.' },
+                        { t: 55, author: 'meridian_op',     text: 'reconfirm target 47.6062 / -122.3321?' },
+                        { t: 60, author: 'obsidian_actual', text: '<span class="clue" data-type="hint" data-value="OBSIDIAN confirms primary coordinate from SKIDNET directive_omega.sig">confirmed. primary.</span>' },
+                        { t: 75, author: 'canopy_fin',      text: 'ledger moves thursday. <span class="clue" data-type="hint" data-value="canopy repeats standing order from intercept_1442.log">as usual.</span>' },
+                    ],
+                    drops: [
+                        { t: 10, author: 'obsidian_actual', text: 'drop ledger: <span class="clue" data-type="wallet" data-value="bc1qledger0000000000000000000000000000">bc1qledger0000000000000000000000000000</span>. touch it and you disappear.' },
+                        { t: 30, author: 'canopy_fin',      text: 'moving 4.2M EUR through the Vienna entity. <span class="clue" data-type="hint" data-value="matches financing_trail.led from SKIDNET">same rail.</span>' },
+                        { t: 50, author: 'meridian_op',     text: 'courier confirmed. KESTREL is onboard.' },
+                        { t: 70, author: 'obsidian_actual', text: 'if this server is compromised, all of you scatter. i will handle cleanup. <span class="clue" data-type="hint" data-value="OBSIDIAN is the only one who controls cleanup — endgame authority">i alone.</span>' },
+                    ],
+                    vouch: [
+                        { t: 25, author: 'nightjar_bot',    text: '▶ new vouched handle: <span class="clue" data-type="name" data-value="shadow_cell">shadow_cell</span>' },
+                        { t: 40, author: 'obsidian_actual', text: 'not on this network. <span class="clue" data-type="hint" data-value="OBSIDIAN rejects outside handles — strict compartmentalization">burn it.</span>' },
+                    ],
+                },
+                dms: [
+                    { triggerAt: 10000, from: 'kestrel_run', text: 'if you are who i think you are, the ledger is real. it survives.' },
+                    { triggerAt: 40000, from: 'obsidian_actual', text: 'directive omega. you have been warned once.' },
+                ],
+            },
+        };
+
+        function freshState(scenarioId) {
+            const scenario = SCENARIOS[scenarioId];
+            return {
+                scenario, scenarioId,
+                started: Date.now(),
+                running: false,
+                currentChannel: scenario.channels[0],
+                feedIndexes: Object.fromEntries(scenario.channels.map(c => [c, 0])),
+                feedTimers: {},
+                dmTimers: [],
+                countdownTimer: null,
+                evidence: [],
+                markedMessages: new Set(),
+                suspectsSeen: new Set(),
+                selectedSuspect: null,
+                elapsedMs: 0,
+                hintsUsed: 0,
+                unreadCounts: Object.fromEntries(scenario.channels.map(c => [c, 0])),
+                dmsOpened: [],
+                dmsFrom: new Set(),
+                ended: false,
+                victory: false,
+                score: 0,
+            };
+        }
+
+        function onUnmask(handle, data) {
+            if (!state) return;
+            addIntel({
+                source: 'KODEX→NJ',
+                text: `Unmasked data for "${handle}" now available: ${data.ip} (${data.location}).`,
+            });
+            renderSuspects();
+            if (!state.evidence.find(e => e.type === 'intel' && e.value.includes(handle))) {
+                state.evidence.push({
+                    type: 'intel',
+                    value: `UNMASKED: ${handle} → IP ${data.ip} · ${data.location}`,
+                    author: 'KODEX', channel: 'SYNC',
+                    time: Math.floor((Date.now() - state.started) / 1000),
+                });
+                renderEvidence();
+            }
+            toast('Intel Sync', `Unmasked data for "${handle}" added to Nightjar evidence.`, 'intel');
+        }
+
+        /* ---- Leaderboard ---- */
+        function loadLeaderboard() {
+            try {
+                const raw = localStorage.getItem(LB_KEY);
+                if (!raw) return [];
+                const data = JSON.parse(raw);
+                return Array.isArray(data) ? data : [];
+            } catch (e) { return []; }
+        }
+        function saveLeaderboard(entries) {
+            try { localStorage.setItem(LB_KEY, JSON.stringify(entries.slice(0, 50))); } catch (e) {}
+        }
+        function recordScore(entry) {
+            const board = loadLeaderboard();
+            board.push(entry);
+            board.sort((a, b) => b.score - a.score);
+            saveLeaderboard(board);
+        }
+        function formatDuration(ms) {
+            const s = Math.floor(ms / 1000);
+            const m = Math.floor(s / 60);
+            return m > 0 ? `${m}m ${s % 60}s` : `${s}s`;
+        }
+
+        /* ---- Server Hub ---- */
+        function renderServerHub() {
+            const grid = $('server-grid');
+            const order = ['easy', 'normal', 'tough', 'dark-market', 'black-ice', 'ghost-net', 'helio-crossover'];
+            const html = order.map(id => {
+                const s = SCENARIOS[id];
+                const cleared = SHARED.clearedServers.has(id);
+                const unmaskedInServer = s.suspects.filter(x => SHARED.unmaskedHandles.has(x.handle.toLowerCase())).length;
+                const totalSuspects = s.suspects.length;
+                const mins = Math.round(s.durationMs / 60000);
+                const tagClass = s.difficulty === 'easy' ? 'easy' :
+                                s.difficulty === 'medium' ? 'medium' :
+                                s.difficulty === 'hard' ? 'hard' : 'special';
+                const clearedClass = cleared ? 'cleared' : '';
+                const dangerClass = s.difficulty === 'hard' ? 'danger-zone' : '';
+                return `
+                    <div class="server-card ${clearedClass} ${dangerClass}" data-scenario="${id}">
+                        <div class="server-card-head">
+                            <div class="server-icon" style="background: ${s.color};">${s.icon}</div>
+                            <div class="server-info">
+                                <div class="server-name">${esc(s.title)}</div>
+                                <div class="server-desc">${esc(s.desc)}</div>
+                            </div>
+                        </div>
+                        <div class="server-tags">
+                            <span class="server-tag ${tagClass}">${esc(s.difficulty)}</span>
+                            <span class="server-tag">${s.channels.length} channels</span>
+                            <span class="server-tag">${mins} min</span>
+                        </div>
+                        <div class="server-meta">
+                            <div class="server-meta-item">
+                                <span class="k">Suspects:</span>
+                                <span class="v">${totalSuspects}</span>
+                            </div>
+                            <div class="server-meta-item">
+                                <span class="k">Unmasked:</span>
+                                <span class="v ${unmaskedInServer > 0 ? 'good' : ''}">${unmaskedInServer}/${totalSuspects}</span>
+                            </div>
+                            <div class="server-meta-item">
+                                <span class="k">Ringleader:</span>
+                                <span class="v ${cleared ? 'good' : 'warn'}">${cleared ? 'CAUGHT' : 'UNKNOWN'}</span>
+                            </div>
+                            <div class="server-meta-item">
+                                <span class="k">Status:</span>
+                                <span class="v ${cleared ? 'good' : ''}">${cleared ? 'CLEARED' : 'ACTIVE'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            grid.innerHTML = html;
+            grid.querySelectorAll('.server-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const id = card.dataset.scenario;
+                    if (SHARED.clearedServers.has(id)) {
+                        toast('Server already cleared', 'You already caught the ringleader here. You can still replay it.', 'intel');
+                    }
+                    openServer(id);
+                });
+            });
+            $('hub-cleared-count').textContent = `${SHARED.clearedServers.size} / ${order.length}`;
+            $('hub-unmasked-count').textContent = String(SHARED.unmaskedHandles.size);
+        }
+
+        function openServer(scenarioId) {
+            if (!SCENARIOS[scenarioId]) return;
+            // Reset any active scenario
+            if (state) {
+                state.running = false;
+                Object.values(state.feedTimers).forEach(t => clearTimeout(t));
+                state.dmTimers.forEach(t => clearTimeout(t));
+                if (state.countdownTimer) clearInterval(state.countdownTimer);
+            }
+            // Show server view
+            $('nj-view-hub').classList.remove('active');
+            $('nj-view-server').classList.add('active');
+            startGame(scenarioId);
+        }
+
+        function showHub() {
+            if (state) {
+                state.running = false;
+                Object.values(state.feedTimers).forEach(t => clearTimeout(t));
+                state.dmTimers.forEach(t => clearTimeout(t));
+                if (state.countdownTimer) clearInterval(state.countdownTimer);
+                hideTyping();
+            }
+            $('nj-view-server').classList.remove('active');
+            $('nj-view-hub').classList.add('active');
+            renderServerHub();
+        }
+
+        /* ---- Rendering ---- */
+        function renderChannels() {
+            const list = $('nj-channels-list');
+            const voiceChannels = new Set();
+            if (state.suspectsSeen.size > 0) {
+                const ch = state.scenario.channels[Math.floor(Math.random() * state.scenario.channels.length)];
+                voiceChannels.add(ch);
+            }
+            const html = state.scenario.channels.map(ch => {
+                const active = ch === state.currentChannel ? 'active' : '';
+                const unread = state.unreadCounts[ch] || 0;
+                const unreadTag = unread > 0 ? `<span class="unread">${unread}</span>` : '';
+                const voice = voiceChannels.has(ch) ? '<span class="voice-dot"></span>' : '';
+                return `<div class="channel-item ${active}" data-channel="${esc(ch)}">
+                    <span>${voice}# ${esc(ch)}</span>
+                    ${unreadTag}
+                </div>`;
+            }).join('');
+            list.innerHTML = html;
+            list.querySelectorAll('.channel-item').forEach(el => {
+                el.addEventListener('click', () => switchChannel(el.dataset.channel));
+            });
+            $('nj-chat-channel-label').textContent = `# ${state.currentChannel}`;
+        }
+
+        function renderSuspects() {
+            const list = $('nj-suspects-list');
+            if (!state.suspectsSeen.size) {
+                list.innerHTML = '<div class="empty-state">No suspects identified</div>';
+                $('nj-member-count').textContent = '0';
+                return;
+            }
+            const voiceSuspect = Array.from(state.suspectsSeen)[Math.floor(Math.random() * state.suspectsSeen.size)];
+            const html = state.scenario.suspects
+                .filter(s => state.suspectsSeen.has(s.handle))
+                .map(s => {
+                    const evidenceCount = state.evidence.filter(e => e.author === s.handle).length;
+                    const selected = state.selectedSuspect === s.handle ? 'selected' : '';
+                    const flagged = evidenceCount >= 3 || SHARED.prioritySuspects.has(s.handle) ? 'flagged' : '';
+                    const isVoice = s.handle === voiceSuspect;
+                    const isUnmasked = SHARED.unmaskedHandles.has(s.handle.toLowerCase());
+                    const unmaskedClass = isUnmasked ? 'unmasked' : '';
+                    const priority = SHARED.prioritySuspects.has(s.handle) ? '<span style="color: var(--red); margin-left:6px; font-size:0.7rem;">★</span>' : '';
+                    const unmaskedBadge = isUnmasked ? '<span style="color:var(--green-pale); margin-left:6px; font-size:0.65rem;">🔓</span>' : '';
+                    return `
+                        <div class="suspect-card ${selected} ${flagged} ${unmaskedClass}" data-handle="${esc(s.handle)}">
+                            <div class="suspect-head">
+                                <div class="avatar ${isVoice ? 'voice' : ''}" style="background: ${s.color};">${esc(s.handle.charAt(0).toUpperCase())}</div>
+                                <div class="suspect-name">${esc(s.handle)}${priority}${unmaskedBadge}</div>
+                            </div>
+                            <div class="suspect-meta">joined ${esc(s.joined)} · ${evidenceCount} logged</div>
+                        </div>`;
+                }).join('');
+            list.innerHTML = html;
+            $('nj-member-count').textContent = String(state.suspectsSeen.size);
+            $('nj-unmasked-count').textContent = String(SHARED.unmaskedHandles.size);
+            list.querySelectorAll('.suspect-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    state.selectedSuspect = card.dataset.handle;
+                    renderSuspects();
+                });
+                card.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    state.selectedSuspect = card.dataset.handle;
+                    renderSuspects();
+                    showContextMenu(e.clientX, e.clientY, card.dataset.handle);
+                });
+            });
+        }
+
+        function renderEvidence() {
+            const list = $('nj-evidence-list');
+            if (!state.evidence.length) {
+                list.innerHTML = '<div class="empty-state">Click clues to log them</div>';
+                $('nj-evidence-count').textContent = '0';
+                return;
+            }
+            const html = state.evidence.map(e => `
+                <div class="evidence-item ${e.type}">
+                    <div class="evidence-tag">${esc(e.type)} · ${esc(e.channel)} · ${esc(e.author)}</div>
+                    <div class="evidence-content">${esc(e.value)}</div>
+                </div>
+            `).join('');
+            list.innerHTML = html;
+            $('nj-evidence-count').textContent = String(state.evidence.length);
+        }
+
+        function renderMessage(channel, msg) {
+            if (channel !== state.currentChannel) {
+                state.unreadCounts[channel] = (state.unreadCounts[channel] || 0) + 1;
+                renderChannels();
+                return;
+            }
+            const feed = $('nj-chat-feed');
+            const suspect = state.scenario.suspects.find(s => s.handle === msg.author);
+            const color = suspect ? suspect.color : '#8b949e';
+            const time = new Date(state.started + msg.t * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const marked = state.markedMessages.has(msg.text) ? 'marked' : '';
+            const div = document.createElement('div');
+            div.className = `message clickable ${marked}`;
+            const reactionHtml = (msg.reactions || []).map(r => `
+                <span class="reaction">${r.emoji} <span class="count">${r.count}</span></span>
+            `).join('');
+            div.innerHTML = `
+                <div class="avatar" style="background: ${color};">${esc(msg.author.charAt(0).toUpperCase())}</div>
+                <div class="msg-body">
+                    <div class="msg-head">
+                        <span class="msg-author" style="color: ${color};">${esc(msg.author)}</span>
+                        <span class="msg-time">${time}</span>
+                    </div>
+                    <div class="msg-text">${msg.text}</div>
+                    ${reactionHtml ? `<div class="reactions">${reactionHtml}</div>` : ''}
+                </div>
+            `;
+            div.querySelectorAll('.clue').forEach(clue => {
+                clue.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    collectEvidence(clue, msg, channel);
+                });
+            });
+            feed.appendChild(div);
+            feed.scrollTop = feed.scrollHeight;
+        }
+
+        function collectEvidence(clueEl, msg, channel) {
+            const type = clueEl.dataset.type;
+            const value = clueEl.dataset.value;
+            if (!type || !value) return;
+            const existing = state.evidence.find(e => e.type === type && e.value === value);
+            if (existing) { clueEl.classList.add('collected'); return; }
+            state.evidence.push({ type, value, author: msg.author, channel, time: msg.t });
+            clueEl.classList.add('collected');
+            state.markedMessages.add(msg.text);
+            renderEvidence();
+            renderSuspects();
+            addIntel({
+                source: 'NIGHTJAR',
+                text: `[${type}] ${value} — from ${msg.author} in #${channel}`,
+            });
+            if (type === 'wallet') playTone(660, 0.08);
+            else if (type === 'ip') playTone(880, 0.08);
+            else if (type === 'hint') playTone(440, 0.12);
+            else playTone(550, 0.06);
+        }
+
+        function switchChannel(ch) {
+            if (!state.scenario.channels.includes(ch)) {
+                logSystem(`Unknown channel: #${esc(ch)}`, 'status-error');
+                return;
+            }
+            state.currentChannel = ch;
+            state.unreadCounts[ch] = 0;
+            $('nj-chat-feed').innerHTML = '';
+            const seen = state.feedIndexes[ch] || 0;
+            const msgs = state.scenario.messages[ch] || [];
+            for (let i = 0; i < seen; i++) {
+                renderMessage(ch, msgs[i]);
+            }
+            renderChannels();
+            logSystem(`Switched to #${esc(ch)}`, 'status-info');
+        }
+
+        /* ---- Feed Runner ---- */
+        function feedTick(channel) {
+            if (!state.running) return;
+            const msgs = state.scenario.messages[channel] || [];
+            const idx = state.feedIndexes[channel];
+            if (idx >= msgs.length) return;
+            const next = msgs[idx];
+            if (channel === state.currentChannel) showTyping(next.author);
+            const typingDuration = 500 + Math.random() * 800;
+            setTimeout(() => {
+                if (!state.running) return;
+                if (channel === state.currentChannel) hideTyping();
+                state.suspectsSeen.add(next.author);
+                renderSuspects();
+                renderMessage(channel, next);
+                state.feedIndexes[channel]++;
+                const nextMsg = msgs[state.feedIndexes[channel]];
+                if (!nextMsg) return;
+                const gap = (nextMsg.t - next.t) * 1000;
+                state.feedTimers[channel] = setTimeout(() => feedTick(channel), Math.max(300, gap));
+            }, typingDuration);
+        }
+
+        function dmTick(dmIndex) {
+            if (!state.running) return;
+            const dms = state.scenario.dms || [];
+            if (dmIndex >= dms.length) return;
+            const dm = dms[dmIndex];
+            const wait = dm.triggerAt - (Date.now() - state.started);
+            const timer = setTimeout(() => {
+                if (!state.running) return;
+                deliverDM(dm);
+                dmTick(dmIndex + 1);
+            }, Math.max(1000, wait));
+            state.dmTimers.push(timer);
+        }
+
+        function deliverDM(dm) {
+            state.dmsOpened.push(dm);
+            state.dmsFrom.add(dm.from);
+            playTone(700, 0.15);
+            setTimeout(() => playTone(900, 0.15), 120);
+            toast(`New DM from ${dm.from}`, dm.text.slice(0, 60) + (dm.text.length > 60 ? '...' : ''), 'success');
+            state.evidence.push({
+                type: 'dm',
+                value: `${dm.from}: "${dm.text}"`,
+                author: dm.from, channel: 'DM',
+                time: Math.floor((Date.now() - state.started) / 1000),
+            });
+            renderEvidence();
+            renderSuspects();
+            addIntel({ source: 'NIGHTJAR', text: `DM from ${dm.from}: "${dm.text}"` });
+        }
+
+        function showDM() {
+            const dms = state.dmsOpened;
+            if (!dms.length) return logSystem('No DMs received yet.', 'status-muted');
+            const body = $('nj-dm-body');
+            const nameEl = $('nj-dm-name');
+            const speakers = Array.from(state.dmsFrom);
+            nameEl.textContent = speakers.length === 1 ? `DM with ${speakers[0]}` : `DMs (${speakers.length} conversations)`;
+            body.innerHTML = dms.map(dm => `
+                <div class="dm-msg from-them">
+                    <div style="color: var(--blurple); font-size:0.7rem; margin-bottom:4px;">${esc(dm.from)}</div>
+                    ${esc(dm.text)}
+                </div>
+            `).join('');
+            $('nj-dm-modal').classList.add('open');
+        }
+
+        function showTyping(name) {
+            $('nj-typing-name').textContent = name;
+            $('nj-typing-indicator').classList.add('active');
+        }
+        function hideTyping() {
+            $('nj-typing-indicator').classList.remove('active');
+        }
+
+        /* ---- Context Menu ---- */
+        function showContextMenu(x, y, handle) {
+            const menu = $('nj-ctx-menu');
+            const px = Math.min(x, window.innerWidth - 220);
+            const py = Math.min(y, window.innerHeight - 260);
+            menu.style.left = px + 'px';
+            menu.style.top = py + 'px';
+            menu.classList.add('open');
+            menu.querySelectorAll('.ctx-item').forEach(item => {
+                item.onclick = () => {
+                    const action = item.dataset.action;
+                    menu.classList.remove('open');
+                    if (action === 'inspect') COMMANDS.inspect(handle);
+                    else if (action === 'evidence') COMMANDS.evidence();
+                    else if (action === 'mark') {
+                        if (SHARED.prioritySuspects.has(handle)) SHARED.prioritySuspects.delete(handle);
+                        else SHARED.prioritySuspects.add(handle);
+                        renderSuspects();
+                        logSystem(`Priority ${SHARED.prioritySuspects.has(handle) ? 'set' : 'cleared'}: ${esc(handle)}`, 'status-info');
+                    }
+                    else if (action === 'dm') showDM();
+                    else if (action === 'arrest') COMMANDS.arrest(handle);
+                    else if (action === 'kodex') {
+                        switchPage('dashboard');
+                        $('form-subject').value = handle;
+                        $('new-modal').classList.add('open');
+                    }
+                };
+            });
+        }
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.suspect-card')) {
+                $('nj-ctx-menu').classList.remove('open');
+            }
+        });
+
+        /* ---- Timer ---- */
+        function tickTimer() {
+            if (!state || !state.running) return;
+            state.elapsedMs = Date.now() - state.started;
+            const remaining = Math.max(0, state.scenario.durationMs - state.elapsedMs);
+            const m = Math.floor(remaining / 60000);
+            const s = Math.floor((remaining % 60000) / 1000);
+            const timerEl = $('nj-timer');
+            timerEl.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            if (remaining < 60000) timerEl.className = 'stat-value danger';
+            else if (remaining < 180000) timerEl.className = 'stat-value warn';
+            else timerEl.className = 'stat-value';
+            if (remaining <= 0 && state.running) {
+                endGame(false, 'Time expired. The suspects scattered before arrest.');
+            }
+        }
+
+        /* ---- Sound ---- */
+        let audioCtx = null;
+        function playTone(freq, dur, type = 'square') {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                osc.frequency.value = freq;
+                osc.type = type;
+                g.gain.value = 0.03;
+                osc.connect(g); g.connect(audioCtx.destination);
+                osc.start();
+                g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+                osc.stop(audioCtx.currentTime + dur);
+            } catch (e) {}
+        }
+
+        /* ---- Commands ---- */
+        const COMMANDS = {
+            help() {
+                logSystem('◉ COMMANDS', 'status-info');
+                logSystem('  switch &lt;channel&gt;   — view another channel');
+                logSystem('  channels            — list channels');
+                logSystem('  arrest &lt;handle&gt;     — submit warrant');
+                logSystem('  inspect &lt;handle&gt;    — show dossier');
+                logSystem('  evidence            — list logged evidence');
+                logSystem('  dms                 — open DM panel');
+                logSystem('  hub                 — return to server hub');
+                logSystem('  notes               — analyst notes');
+                logSystem('  hint                — deduct a hint from your score');
+                logSystem('  time                — show time remaining');
+                logSystem('  export              — export case file (JSON + TXT)');
+            },
+            switch(arg) {
+                if (!arg) return logSystem('Usage: switch &lt;channel&gt;', 'status-error');
+                switchChannel(arg.replace(/^#/, ''));
+            },
+            channels() {
+                logSystem('◉ CHANNELS', 'status-info');
+                state.scenario.channels.forEach(ch => {
+                    const count = state.unreadCounts[ch] || 0;
+                    const active = ch === state.currentChannel ? ' ← viewing' : '';
+                    logSystem(`  #${esc(ch)}${count > 0 ? ` (${count} unread)` : ''}${active}`, 'status-muted');
+                });
+            },
+            inspect(arg) {
+                if (!arg) return logSystem('Usage: inspect &lt;handle&gt;', 'status-error');
+                const s = state.scenario.suspects.find(x => x.handle.toLowerCase() === arg.toLowerCase());
+                if (!s) return logSystem(`No such suspect: ${esc(arg)}`, 'status-error');
+                if (!state.suspectsSeen.has(s.handle)) return logSystem(`Suspect ${esc(arg)} has not appeared in chat yet.`, 'status-warn');
+                const evidence = state.evidence.filter(e => e.author === s.handle);
+                const isUnmasked = SHARED.unmaskedHandles.has(s.handle.toLowerCase());
+                logSystem(`◉ DOSSIER — ${esc(s.handle)}`, 'status-info');
+                logSystem(`  Joined : ${esc(s.joined)}`);
+                logSystem(`  Role   : ${esc(s.role)}`);
+                logSystem(`  Notes  : ${esc(s.note)}`);
+                logSystem(`  Priority: ${SHARED.prioritySuspects.has(s.handle) ? '<span style="color:var(--red)">MARKED</span>' : 'no'}`, 'status-muted');
+                logSystem(`  Evidence logged: ${evidence.length}`, evidence.length >= 3 ? 'status-success' : 'status-muted');
+                if (isUnmasked) {
+                    const data = SHARED.suspectData[s.handle.toLowerCase()];
+                    logSystem(`  🔓 UNMASKED via KODEX:`, 'status-success');
+                    logSystem(`     Discord ID: ${esc(data.discordId)}`, 'status-success');
+                    logSystem(`     IP: ${esc(data.ip)}`, 'status-success');
+                    logSystem(`     Location: ${esc(data.location)}`, 'status-success');
+                }
+                evidence.forEach(e => logSystem(`    [${e.type}] ${esc(e.value)}`, 'status-muted'));
+            },
+            evidence() {
+                if (!state.evidence.length) return logSystem('No evidence logged. Click clues in chat.', 'status-muted');
+                logSystem(`◉ EVIDENCE LOG (${state.evidence.length})`, 'status-info');
+                state.evidence.forEach((e, i) => {
+                    logSystem(`  ${i + 1}. [${e.type}] ${esc(e.value)} — ${esc(e.author)} in #${esc(e.channel)}`, 'status-muted');
+                });
+            },
+            dms() { showDM(); },
+            hub() { showHub(); },
+            notes() {
+                logSystem('◉ ANALYST NOTES', 'status-info');
+                logSystem('  · Clues in messages are clickable.');
+                logSystem('  · Use <b>switch</b> to see other channels.');
+                logSystem('  · Right-click suspects for a context menu.');
+                logSystem('  · DMs arrive over time — watch for them.');
+                logSystem('  · File KODEX requests to unmask suspects.');
+                logSystem('  · Type <b>hub</b> to return to the server hub.');
+            },
+            hint() {
+                if (state.hintsUsed >= 1) return logSystem('Hint already used.', 'status-muted');
+                state.hintsUsed++;
+                logSystem('◉ HINT', 'status-warn');
+                logSystem(`  ${esc(state.scenario.hintText)}`, 'status-warn');
+                logSystem(`  (Score penalty applied)`, 'status-muted');
+            },
+            time() {
+                const remaining = Math.max(0, state.scenario.durationMs - (Date.now() - state.started));
+                const m = Math.floor(remaining / 60000);
+                const s = Math.floor((remaining % 60000) / 1000);
+                logSystem(`Time remaining: ${m}m ${s}s`, remaining < 60000 ? 'status-error' : 'status-info');
+            },
+            export() { generateCaseFile(); },
+            arrest(arg) {
+                if (!arg) return logSystem('Usage: arrest &lt;handle&gt;', 'status-error');
+                const target = arg.toLowerCase();
+                const suspect = state.scenario.suspects.find(x => x.handle.toLowerCase() === target);
+                if (!suspect) return logSystem(`No such suspect: ${esc(arg)}`, 'status-error');
+                if (!state.suspectsSeen.has(suspect.handle)) return logSystem(`Suspect ${esc(arg)} hasn't appeared in chat.`, 'status-warn');
+                if (suspect.handle === state.scenario.ringleader) {
+                    endGame(true, `Warrant served. <b>${esc(suspect.handle)}</b> taken into custody.`);
+                } else {
+                    endGame(false, `Mistaken identity. The real ringleader — <b>${esc(state.scenario.ringleader)}</b> — escaped while you were serving the wrong warrant.`);
+                }
+            },
+        };
+
+        function runCommand(input) {
+            const parts = input.trim().split(/\s+/);
+            if (!parts[0]) return;
+            const cmd = parts[0].toLowerCase();
+            const arg = parts[1];
+            if (cmd in COMMANDS) COMMANDS[cmd](arg);
+            else logSystem(`Unknown command: ${esc(cmd)}. Try 'help'.`, 'status-error');
+        }
+
+        function logSystem(text, cls = '') {
+            const feed = $('nj-chat-feed');
+            const div = document.createElement('div');
+            div.className = 'message';
+            div.style.opacity = '0.75';
+            div.innerHTML = `
+                <div class="avatar" style="background: var(--green); color:#000;">$</div>
+                <div class="msg-body">
+                    <div class="msg-head">
+                        <span class="msg-author" style="color: var(--green);">analyst</span>
+                        <span class="msg-time">${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
+                    </div>
+                    <div class="msg-text ${cls}">${text}</div>
+                </div>`;
+            feed.appendChild(div);
+            feed.scrollTop = feed.scrollHeight;
+        }
+
+        /* ---- Game Flow ---- */
+        function startGame(scenarioId) {
+            state = freshState(scenarioId);
+            state.running = true;
+            SHARED.activeScenarioId = scenarioId;
+            SHARED.activeSuspects = state.scenario.suspects.map(s => s.handle);
+
+            $('nj-server-title').textContent = `◉ ${state.scenario.title.toUpperCase()}`;
+            $('nj-chat-feed').innerHTML = '';
+            $('nj-evidence-list').innerHTML = '';
+            $('nj-suspects-list').innerHTML = '';
+            $('nj-evidence-count').textContent = '0';
+            $('nj-member-count').textContent = '0';
+            $('nj-unmasked-count').textContent = String(SHARED.unmaskedHandles.size);
+            $('nj-server-name').textContent = state.scenario.serverName.toUpperCase();
+            $('nj-chat-status').textContent = 'LIVE';
+            $('nj-chat-status').style.color = 'var(--green)';
+            $('nj-timer').textContent = '--:--';
+            renderChannels();
+
+            addIntel({
+                source: 'NIGHTJAR',
+                text: `Started scenario "${state.scenario.title}" on server ${state.scenario.serverName}.`,
+            });
+
+            logSystem(`Connected to server <b>${esc(state.scenario.serverName)}</b> — scenario: <b>${esc(state.scenario.title)}</b>`, 'status-success');
+            logSystem('Monitoring #' + state.currentChannel + '...', 'status-muted');
+            logSystem('Type <b>help</b> for commands. Type <b>hub</b> to return to server hub.', 'status-muted');
+
+            state.scenario.channels.forEach((ch, i) => {
+                setTimeout(() => feedTick(ch), 1200 + i * 400);
+            });
+            state.countdownTimer = setInterval(tickTimer, 250);
+            dmTick(0);
+            $('nj-cmd-input').focus();
+        }
+
+        function computeScore(victory, elapsedMs) {
+            const base = victory ? 5000 : 1000;
+            const scenarioMult = state.scenarioId === 'tough' ? 3 :
+                                state.scenarioId === 'black-ice' ? 4 :
+                                state.scenarioId === 'ghost-net' ? 3 :
+                                state.scenarioId === 'normal' ? 2 :
+                                state.scenarioId === 'helio-crossover' ? 5 : 1;
+            const timeBonus = victory ? Math.max(0, Math.floor((state.scenario.durationMs - elapsedMs) / 1000)) : 0;
+            const evidenceBonus = state.evidence.length * 50;
+            const dmBonus = state.dmsOpened.length * 200;
+            const unmaskBonus = SHARED.unmaskedHandles.size * 300;
+            const hintPenalty = state.hintsUsed * 500 * state.scenario.hintCost;
+            return Math.max(0, Math.floor((base + timeBonus + evidenceBonus + dmBonus + unmaskBonus) * scenarioMult - hintPenalty));
+        }
+
+        function endGame(victory, message) {
+            if (!state || !state.running) return;
+            state.running = false;
+            state.victory = victory;
+            Object.values(state.feedTimers).forEach(t => clearTimeout(t));
+            state.dmTimers.forEach(t => clearTimeout(t));
+            if (state.countdownTimer) clearInterval(state.countdownTimer);
+            hideTyping();
+            $('nj-chat-status').textContent = victory ? 'CASE CLOSED' : 'CASE FAILED';
+            $('nj-chat-status').style.color = victory ? 'var(--green)' : 'var(--red)';
+
+            if (victory) {
+                SHARED.clearedServers.add(state.scenarioId);
+                addIntel({
+                    source: 'NIGHTJAR',
+                    text: `CLEARED: "${state.scenario.title}" — ringleader ${state.scenario.ringleader} arrested.`,
+                });
+            }
+
+            const card = $('nj-end-card');
+            card.classList.toggle('win', victory);
+            card.classList.toggle('lose', !victory);
+            $('nj-end-title').textContent = victory ? '★ WARRANT SERVED ★' : '✖ CASE FAILED';
+            $('nj-end-subtitle').innerHTML = message;
+            const elapsed = state.elapsedMs || (Date.now() - state.started);
+            const mins = Math.floor(elapsed / 60000);
+            const secs = Math.floor((elapsed % 60000) / 1000);
+            const ringleaderEvidence = state.evidence.filter(e => e.author === state.scenario.ringleader).length;
+            const totalMsgs = Object.values(state.scenario.messages).reduce((sum, arr) => sum + arr.length, 0);
+            const seenMsgs = Object.values(state.feedIndexes).reduce((sum, n) => sum + n, 0);
+            const score = computeScore(victory, elapsed);
+            state.score = score;
+            $('nj-end-stats').innerHTML = `
+                <span class="k">Scenario:</span><span class="v" style="color: var(--gold);">${esc(state.scenario.title)}</span>
+                <span class="k">Ring leader:</span><span class="v" style="color: var(--${victory ? 'green' : 'red'});">${esc(state.scenario.ringleader)}</span>
+                <span class="k">Time:</span><span class="v">${mins}m ${secs}s</span>
+                <span class="k">Evidence logged:</span><span class="v">${state.evidence.length}</span>
+                <span class="k">On ringleader:</span><span class="v">${ringleaderEvidence}</span>
+                <span class="k">DMs received:</span><span class="v">${state.dmsOpened.length}</span>
+                <span class="k">Messages seen:</span><span class="v">${seenMsgs} / ${totalMsgs}</span>
+                <span class="k">Hints used:</span><span class="v">${state.hintsUsed}</span>
+                <span class="k">KODEX unmask bonus:</span><span class="v">${SHARED.unmaskedHandles.size} × 300</span>
+                <span class="k">Score:</span><span class="v" style="color: var(--gold); font-size:1rem;">${score.toLocaleString()}</span>
+            `;
+            recordScore({ score, victory, scenarioId: state.scenarioId, scenarioTitle: state.scenario.title, elapsedMs: elapsed, evidence: state.evidence.length, timestamp: Date.now() });
+            $('nj-end-overlay').classList.add('open');
+            if (victory) {
+                playTone(660, 0.15);
+                setTimeout(() => playTone(880, 0.15), 150);
+                setTimeout(() => playTone(1320, 0.3), 300);
+            } else {
+                playTone(220, 0.4, 'sawtooth');
+            }
+        }
+
+        function generateCaseFile() {
+            if (!state) return;
+            const elapsed = state.elapsedMs || (Date.now() - state.started);
+            const mins = Math.floor(elapsed / 60000);
+            const secs = Math.floor((elapsed % 60000) / 1000);
+            const caseData = {
+                meta: { scenario: state.scenario.title, server: state.scenario.serverName, difficulty: state.scenarioId, startedAt: new Date(state.started).toISOString(), duration: `${mins}m ${secs}s`, victory: state.victory, score: state.score },
+                ringleader: state.scenario.ringleader,
+                unmaskedHandles: Array.from(SHARED.unmaskedHandles),
+                evidence: state.evidence.map(e => ({ type: e.type, value: e.value, from: e.author, channel: e.channel })),
+                dms: state.dmsOpened.map(dm => ({ from: dm.from, text: dm.text })),
+                prioritySuspects: Array.from(SHARED.prioritySuspects),
+                suspectsSeen: Array.from(state.suspectsSeen),
+            };
+            const json = JSON.stringify(caseData, null, 2);
+            const txtLines = [];
+            txtLines.push('════════════════════════════════════════════════════════');
+            txtLines.push('  OPERATION NIGHTJAR — CASE FILE');
+            txtLines.push('════════════════════════════════════════════════════════');
+            txtLines.push('');
+            txtLines.push(`Scenario:     ${state.scenario.title}`);
+            txtLines.push(`Server:       ${state.scenario.serverName}`);
+            txtLines.push(`Difficulty:   ${state.scenarioId.toUpperCase()}`);
+            txtLines.push(`Started:      ${new Date(state.started).toISOString()}`);
+            txtLines.push(`Duration:     ${mins}m ${secs}s`);
+            txtLines.push(`Outcome:      ${state.victory ? 'VICTORY' : 'FAILURE'}`);
+            txtLines.push(`Score:        ${state.score.toLocaleString()}`);
+            txtLines.push(`Ringleader:   ${state.scenario.ringleader}`);
+            txtLines.push('');
+            txtLines.push('────────────────────────────────────────────────────────');
+            txtLines.push('  UNMASKED HANDLES (via KODEX)');
+            txtLines.push('────────────────────────────────────────────────────────');
+            SHARED.unmaskedHandles.forEach(h => {
+                const d = SHARED.suspectData[h];
+                txtLines.push(`  ${h} — IP ${d ? d.ip : '?'} · ${d ? d.location : '?'}`);
+            });
+            txtLines.push('');
+            txtLines.push('────────────────────────────────────────────────────────');
+            txtLines.push('  EVIDENCE LOG');
+            txtLines.push('────────────────────────────────────────────────────────');
+            state.evidence.forEach((e, i) => {
+                txtLines.push(`  [${i + 1}] ${e.type.toUpperCase().padEnd(8)} ${e.value}`);
+                txtLines.push(`       source: ${e.author} / #${e.channel}`);
+            });
+            txtLines.push('');
+            txtLines.push('────────────────────────────────────────────────────────');
+            txtLines.push('  DM TRANSCRIPTS');
+            txtLines.push('────────────────────────────────────────────────────────');
+            state.dmsOpened.forEach(dm => {
+                txtLines.push(`  FROM: ${dm.from}`);
+                txtLines.push(`  MSG : ${dm.text}`);
+                txtLines.push('');
+            });
+            txtLines.push('════════════════════════════════════════════════════════');
+            txtLines.push('  END OF CASE FILE');
+            txtLines.push('════════════════════════════════════════════════════════');
+            const txt = txtLines.join('\n');
+            const blobJson = new Blob([json], { type: 'application/json' });
+            const urlJson = URL.createObjectURL(blobJson);
+            const a1 = document.createElement('a');
+            a1.href = urlJson;
+            a1.download = `nightjar-${state.scenarioId}-${Date.now()}.json`;
+            a1.click();
+            URL.revokeObjectURL(urlJson);
+            setTimeout(() => {
+                const blobTxt = new Blob([txt], { type: 'text/plain' });
+                const urlTxt = URL.createObjectURL(blobTxt);
+                const a2 = document.createElement('a');
+                a2.href = urlTxt;
+                a2.download = `nightjar-${state.scenarioId}-${Date.now()}.txt`;
+                a2.click();
+                URL.revokeObjectURL(urlTxt);
+            }, 400);
+            toast('Case file exported', 'JSON and TXT downloaded.', 'success');
+        }
+
+        /* ---- Init ---- */
+        function init() {
+            renderServerHub();
+
+            $('back-to-hub-btn').addEventListener('click', showHub);
+            $('nj-cmd-submit').addEventListener('click', () => {
+                const v = $('nj-cmd-input').value;
+                if (v.trim()) { runCommand(v); $('nj-cmd-input').value = ''; }
+            });
+            $('nj-cmd-input').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const v = e.target.value;
+                    if (v.trim()) { runCommand(v); e.target.value = ''; }
+                }
+            });
+            $('nj-return-hub-btn').addEventListener('click', () => {
+                $('nj-end-overlay').classList.remove('open');
+                showHub();
+            });
+            $('nj-export-btn').addEventListener('click', generateCaseFile);
+            $('nj-dm-close').addEventListener('click', () => $('nj-dm-modal').classList.remove('open'));
+            $('nj-dm-modal').addEventListener('click', (e) => {
+                if (e.target === $('nj-dm-modal')) $('nj-dm-modal').classList.remove('open');
+            });
+            $('nj-clear-evidence').addEventListener('click', () => {
+                if (!state || !state.running) return;
+                state.evidence = [];
+                state.markedMessages.clear();
+                document.querySelectorAll('#nj-chat-feed .clue.collected').forEach(el => el.classList.remove('collected'));
+                document.querySelectorAll('#nj-chat-feed .message.marked').forEach(el => el.classList.remove('marked'));
+                renderEvidence();
+                renderSuspects();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === '/' && document.activeElement !== $('nj-cmd-input') && $('page-nightjar').classList.contains('active') && $('nj-view-server').classList.contains('active')) {
+                    e.preventDefault();
+                    $('nj-cmd-input').focus();
+                }
+                if (!state || !state.running) return;
+                if (document.activeElement === $('nj-cmd-input')) return;
+                if (!$('page-nightjar').classList.contains('active')) return;
+                if (!$('nj-view-server').classList.contains('active')) return;
+                const n = parseInt(e.key, 10);
+                if (n >= 1 && n <= state.scenario.channels.length) {
+                    switchChannel(state.scenario.channels[n - 1]);
+                }
+            });
+        }
+
+        return { init, renderTimer: tickTimer, state: () => state, onUnmask, showHub };
+    })();
+
+    /* ================================================================
+       PAGE NAVIGATION
+       ================================================================ */
+    function switchPage(page) {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        const navEl = document.querySelector(`.nav-item[data-page="${page}"]`);
+        if (navEl) navEl.classList.add('active');
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        if (page === 'nightjar') {
+            $('page-nightjar').classList.add('active');
+            document.querySelector('.topbar-title').innerHTML = 'OPERATION NIGHTJAR <span>·</span> DISCORD THREAT INTEL';
+            NIGHTJAR.showHub();
+        } else {
+            $('page-dashboard').classList.add('active');
+            document.querySelector('.topbar-title').innerHTML = 'Discord Government Request Portal <span>·</span> KODEX v4.2.1';
+        }
+    }
+
+    function setupNavigation() {
+        document.querySelectorAll('.nav-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const page = el.dataset.page;
+                if (page === 'new') {
+                    $('new-modal').classList.add('open');
+                    return;
+                }
+                switchPage(page);
+            });
+        });
+    }
+
+    /* ================================================================
+       BOOT
+       ================================================================ */
+    document.addEventListener('DOMContentLoaded', () => {
+        setupNavigation();
+        KODEX.init();
+        NIGHTJAR.init();
+        renderIntelFeed();
+        setInterval(() => {
+            KODEX.renderTimer();
+            NIGHTJAR.renderTimer();
+        }, 500);
+        setTimeout(() => toast('KODEX + NIGHTJAR', 'Two operations, one portal. File Discord requests in KODEX to unmask suspects across 7 servers.', 'intel'), 600);
+    });
+
+    window.__KODEX = KODEX;
+    window.__NIGHTJAR = NIGHTJAR;
+    window.__SHARED = SHARED;
+
+})();
+</script>
+</body>
+</html>
